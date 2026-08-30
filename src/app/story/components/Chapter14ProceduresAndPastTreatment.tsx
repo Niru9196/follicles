@@ -12,9 +12,20 @@ const procedureRows: Array<{ key: ProcedureName; label: string }> = [
   { key: 'other', label: 'Other' },
 ];
 
+type ProcedureEntry = { done: boolean | null; sessions?: '1to3' | '4to6' | 'over6'; helped?: boolean | null; other?: string };
+
+// Small style helper — keeps the repeated selected/unselected button styling in one place
+const optionButtonStyle = (selected: boolean) => ({
+  background: selected ? 'rgba(201,168,76,0.12)' : 'transparent',
+  color: selected ? '#C9A84C' : '#A89880',
+  border: `1px solid ${selected ? '#C9A84C' : 'rgba(168,152,128,0.3)'}`,
+  borderRadius: '2px',
+  cursor: 'pointer',
+});
+
 export default function Chapter14ProceduresAndPastTreatment({ onComplete }: Props) {
   const { data, setProcedures, setSideEffectsPastTreatment } = useStory();
-  const [procedureState, setProcedureState] = useState<Record<ProcedureName, { done: boolean | null; sessions?: '1to3' | '4to6' | 'over6'; helped?: boolean | null; other?: string }>>({
+  const [procedureState, setProcedureState] = useState<Record<ProcedureName, ProcedureEntry>>({
     prp: data.procedures.prp ?? { done: null },
     gfcOrIprf: data.procedures.gfcOrIprf ?? { done: null },
     stemCellsOrExosomes: data.procedures.stemCellsOrExosomes ?? { done: null },
@@ -24,8 +35,11 @@ export default function Chapter14ProceduresAndPastTreatment({ onComplete }: Prop
   const [pastTreatmentYesNo, setPastTreatmentYesNo] = useState<boolean | null>(data.sideEffectsPastTreatment.yesNo ?? null);
   const [description, setDescription] = useState(data.sideEffectsPastTreatment.description ?? '');
   const [listening, setListening] = useState(false);
+  const [voiceHint, setVoiceHint] = useState('');
+  const [voiceSupported, setVoiceSupported] = useState(true);
   const [visible, setVisible] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<{ stop: () => void } | null>(null);
 
   useEffect(() => {
     const observer = new IntersectionObserver(([entry]) => { if (entry.isIntersecting) setVisible(true); }, { threshold: 0.2 });
@@ -33,25 +47,25 @@ export default function Chapter14ProceduresAndPastTreatment({ onComplete }: Prop
     return () => observer.disconnect();
   }, []);
 
-  const updateProcedure = (key: ProcedureName, patch: Partial<{ done: boolean | null; sessions?: '1to3' | '4to6' | 'over6'; helped?: boolean | null; other?: string }>) => {
+  // Stop any in-flight recognition if the patient navigates away mid-listen
+  useEffect(() => {
+    return () => { recognitionRef.current?.stop(); };
+  }, []);
+
+  const updateProcedure = (key: ProcedureName, patch: Partial<ProcedureEntry>) => {
     setProcedureState(prev => ({
       ...prev,
       [key]: { ...prev[key], ...patch },
     }));
   };
 
-  const rowKeyForProcedure = (item: { done: boolean | null; sessions?: '1to3' | '4to6' | 'over6'; helped?: boolean | null; other?: string }) => {
-    return procedureRows.find(row => procedureState[row.key] === item)?.key;
-  };
-
   const hasAnyProcedureAnswered = Object.values(procedureState).some(item => item.done !== null);
-  const hasProcedureFollowUpsComplete = Object.values(procedureState).every(item => {
+  const hasProcedureFollowUpsComplete = Object.entries(procedureState).every(([key, item]) => {
     if (item.done === null) return true;
     if (item.done === false) return true;
     if (!item.sessions) return false;
     if (item.helped === null || item.helped === undefined) return false;
-    const rowKey = rowKeyForProcedure(item);
-    if (rowKey === 'other') return !!item.other?.trim();
+    if (key === 'other') return !!item.other?.trim();
     return true;
   });
   const canContinue = hasAnyProcedureAnswered && hasProcedureFollowUpsComplete && pastTreatmentYesNo !== null &&
@@ -72,18 +86,28 @@ export default function Chapter14ProceduresAndPastTreatment({ onComplete }: Prop
   const handleVoiceDescription = () => {
     if (typeof window === 'undefined') return;
 
+    // Tap again while listening = stop, rather than stacking a second recognition instance
+    if (listening) {
+      recognitionRef.current?.stop();
+      return;
+    }
+
     type SpeechRecognitionCtor = new () => SpeechRecognitionLike;
     type SpeechRecognitionLike = {
       lang: string;
       continuous: boolean;
       interimResults: boolean;
       onresult: ((event: SpeechRecognitionEventLike) => void) | null;
-      onerror: (() => void) | null;
+      onerror: ((event: SpeechRecognitionErrorLike) => void) | null;
       onend: (() => void) | null;
       start: () => void;
+      stop: () => void;
     };
     type SpeechRecognitionEventLike = {
       results: ArrayLike<ArrayLike<{ transcript: string }>>;
+    };
+    type SpeechRecognitionErrorLike = {
+      error: string;
     };
 
     const SpeechRecognition =
@@ -91,14 +115,18 @@ export default function Chapter14ProceduresAndPastTreatment({ onComplete }: Prop
       (window as unknown as { SpeechRecognition?: SpeechRecognitionCtor; webkitSpeechRecognition?: SpeechRecognitionCtor }).webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
-      alert('Voice input is not supported in this browser. Please type your response instead.');
+      // No alert() — fall back to the visible textarea silently, same as if the patient just typed
+      setVoiceSupported(false);
+      setVoiceHint("Voice isn't available in this browser — you can type instead.");
       return;
     }
 
     const recognition = new SpeechRecognition();
-    recognition.lang = 'en-US';
+    recognitionRef.current = recognition;
+    recognition.lang = 'en-IN'; // Indian English / Hinglish accuracy
     recognition.continuous = false;
     recognition.interimResults = false;
+    setVoiceHint('');
     setListening(true);
 
     recognition.onresult = (event: SpeechRecognitionEventLike) => {
@@ -112,7 +140,17 @@ export default function Chapter14ProceduresAndPastTreatment({ onComplete }: Prop
       }
     };
 
-    recognition.onerror = () => setListening(false);
+    recognition.onerror = (event: SpeechRecognitionErrorLike) => {
+      setListening(false);
+      if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+        setVoiceHint('Mic access is off — you can type instead.');
+      } else if (event.error === 'no-speech') {
+        setVoiceHint("Didn't catch that — try again when ready.");
+      } else {
+        setVoiceHint('Something went wrong — try again, or type instead.');
+      }
+    };
+
     recognition.onend = () => setListening(false);
     recognition.start();
   };
@@ -145,9 +183,9 @@ export default function Chapter14ProceduresAndPastTreatment({ onComplete }: Prop
                 <div key={row.key} className="rounded border p-5" style={{ borderColor: 'rgba(201,168,76,0.2)', background: 'rgba(245,240,232,0.02)' }}>
                   <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                     <p className="font-sans font-medium" style={{ fontSize: '20px', color: '#F5F0E8' }}>{row.label}</p>
-                    <div className="flex gap-3 flex-wrap">
-                      <button onClick={() => updateProcedure(row.key, { done: true })} className="font-sans px-6 py-3" style={{ background: entry.done === true ? 'rgba(201,168,76,0.12)' : 'transparent', color: entry.done === true ? '#C9A84C' : '#A89880', border: `1px solid ${entry.done === true ? '#C9A84C' : 'rgba(168,152,128,0.3)'}`, borderRadius: '2px', cursor: 'pointer' }}>Yes</button>
-                      <button onClick={() => updateProcedure(row.key, { done: false, sessions: undefined, helped: undefined, other: undefined })} className="font-sans px-6 py-3" style={{ background: entry.done === false ? 'rgba(201,168,76,0.12)' : 'transparent', color: entry.done === false ? '#C9A84C' : '#A89880', border: `1px solid ${entry.done === false ? '#C9A84C' : 'rgba(168,152,128,0.3)'}`, borderRadius: '2px', cursor: 'pointer' }}>No</button>
+                    <div className="flex gap-3 flex-wrap" role="group" aria-label={`${row.label} — done`}>
+                      <button aria-pressed={entry.done === true} onClick={() => updateProcedure(row.key, { done: true })} className="font-sans px-6 py-3" style={optionButtonStyle(entry.done === true)}>Yes</button>
+                      <button aria-pressed={entry.done === false} onClick={() => updateProcedure(row.key, { done: false, sessions: undefined, helped: undefined, other: undefined })} className="font-sans px-6 py-3" style={optionButtonStyle(entry.done === false)}>No</button>
                     </div>
                   </div>
 
@@ -155,18 +193,18 @@ export default function Chapter14ProceduresAndPastTreatment({ onComplete }: Prop
                     <div className="mt-5 space-y-5" style={{ animation: 'fadeInUp 0.5s ease' }}>
                       <div>
                         <p className="font-sans mb-3" style={{ color: '#F5F0E8' }}>Sessions</p>
-                        <div className="flex gap-3 flex-wrap">
+                        <div className="flex gap-3 flex-wrap" role="group" aria-label={`${row.label} — sessions`}>
                           {procedureOptions.map(option => (
-                            <button key={option.value} onClick={() => updateProcedure(row.key, { sessions: option.value })} className="font-sans px-4 py-3" style={{ background: entry.sessions === option.value ? 'rgba(201,168,76,0.12)' : 'transparent', color: entry.sessions === option.value ? '#C9A84C' : '#A89880', border: `1px solid ${entry.sessions === option.value ? '#C9A84C' : 'rgba(168,152,128,0.3)'}`, borderRadius: '2px', cursor: 'pointer' }}>{option.label}</button>
+                            <button key={option.value} aria-pressed={entry.sessions === option.value} onClick={() => updateProcedure(row.key, { sessions: option.value })} className="font-sans px-4 py-3" style={optionButtonStyle(entry.sessions === option.value)}>{option.label}</button>
                           ))}
                         </div>
                       </div>
 
                       <div>
                         <p className="font-sans mb-3" style={{ color: '#F5F0E8' }}>Helped?</p>
-                        <div className="flex gap-3 flex-wrap">
-                          <button onClick={() => updateProcedure(row.key, { helped: true })} className="font-sans px-6 py-3" style={{ background: entry.helped === true ? 'rgba(201,168,76,0.12)' : 'transparent', color: entry.helped === true ? '#C9A84C' : '#A89880', border: `1px solid ${entry.helped === true ? '#C9A84C' : 'rgba(168,152,128,0.3)'}`, borderRadius: '2px', cursor: 'pointer' }}>Yes</button>
-                          <button onClick={() => updateProcedure(row.key, { helped: false })} className="font-sans px-6 py-3" style={{ background: entry.helped === false ? 'rgba(201,168,76,0.12)' : 'transparent', color: entry.helped === false ? '#C9A84C' : '#A89880', border: `1px solid ${entry.helped === false ? '#C9A84C' : 'rgba(168,152,128,0.3)'}`, borderRadius: '2px', cursor: 'pointer' }}>No</button>
+                        <div className="flex gap-3 flex-wrap" role="group" aria-label={`${row.label} — helped`}>
+                          <button aria-pressed={entry.helped === true} onClick={() => updateProcedure(row.key, { helped: true })} className="font-sans px-6 py-3" style={optionButtonStyle(entry.helped === true)}>Yes</button>
+                          <button aria-pressed={entry.helped === false} onClick={() => updateProcedure(row.key, { helped: false })} className="font-sans px-6 py-3" style={optionButtonStyle(entry.helped === false)}>No</button>
                         </div>
                       </div>
 
@@ -185,9 +223,9 @@ export default function Chapter14ProceduresAndPastTreatment({ onComplete }: Prop
 
           <div className="rounded border p-5" style={{ borderColor: 'rgba(201,168,76,0.2)', background: 'rgba(245,240,232,0.02)' }}>
             <p className="font-sans font-medium mb-4" style={{ fontSize: '20px', color: '#F5F0E8' }}>Side effects or poor response to past treatment</p>
-            <div className="flex gap-3 flex-wrap mb-5">
-              <button onClick={() => setPastTreatmentYesNo(true)} className="font-sans px-6 py-3" style={{ background: pastTreatmentYesNo === true ? 'rgba(201,168,76,0.12)' : 'transparent', color: pastTreatmentYesNo === true ? '#C9A84C' : '#A89880', border: `1px solid ${pastTreatmentYesNo === true ? '#C9A84C' : 'rgba(168,152,128,0.3)'}`, borderRadius: '2px', cursor: 'pointer' }}>Yes</button>
-              <button onClick={() => setPastTreatmentYesNo(false)} className="font-sans px-6 py-3" style={{ background: pastTreatmentYesNo === false ? 'rgba(201,168,76,0.12)' : 'transparent', color: pastTreatmentYesNo === false ? '#C9A84C' : '#A89880', border: `1px solid ${pastTreatmentYesNo === false ? '#C9A84C' : 'rgba(168,152,128,0.3)'}`, borderRadius: '2px', cursor: 'pointer' }}>No</button>
+            <div className="flex gap-3 flex-wrap mb-5" role="group" aria-label="Side effects or poor response">
+              <button aria-pressed={pastTreatmentYesNo === true} onClick={() => setPastTreatmentYesNo(true)} className="font-sans px-6 py-3" style={optionButtonStyle(pastTreatmentYesNo === true)}>Yes</button>
+              <button aria-pressed={pastTreatmentYesNo === false} onClick={() => setPastTreatmentYesNo(false)} className="font-sans px-6 py-3" style={optionButtonStyle(pastTreatmentYesNo === false)}>No</button>
             </div>
             {pastTreatmentYesNo && (
               <div className="space-y-3 max-w-xl">
@@ -197,29 +235,41 @@ export default function Chapter14ProceduresAndPastTreatment({ onComplete }: Prop
                     type="button"
                     onClick={handleVoiceDescription}
                     className="font-sans px-4 py-2"
-                    style={{
-                      background: listening ? 'rgba(201,168,76,0.12)' : 'transparent',
-                      color: listening ? '#C9A84C' : '#F5F0E8',
-                      border: `1px solid ${listening ? '#C9A84C' : 'rgba(168,152,128,0.3)'}`,
-                      borderRadius: '2px',
-                      cursor: 'pointer',
-                    }}
+                    style={optionButtonStyle(listening)}
                   >
-                    {listening ? 'Listening…' : 'Use voice'}
+                    {listening ? 'Listening… tap to stop' : voiceSupported ? 'Use voice' : 'Type instead'}
                   </button>
                 </div>
                 <textarea value={description} onChange={e => setDescription(e.target.value)} rows={4} placeholder="Please describe" className="w-full p-4" style={{ background: 'rgba(245,240,232,0.02)', border: '1px solid rgba(168,152,128,0.3)', color: '#F5F0E8', borderRadius: '2px' }} />
+                {voiceHint && (
+                  <p className="font-sans text-sm" style={{ color: '#A89880' }} role="status" aria-live="polite">{voiceHint}</p>
+                )}
               </div>
             )}
           </div>
 
-          {canContinue && (
-            <div className="flex justify-center mt-10">
-              <button onClick={handleContinue} className="font-sans font-medium px-10 py-5 transition-all duration-300" style={{ fontSize: 'clamp(16px, 2vw, 20px)', background: '#C9A84C', color: '#0A0A0F', border: 'none', borderRadius: '2px', cursor: 'pointer' }}>
-                Continue →
-              </button>
-            </div>
-          )}
+          <div className="flex flex-col items-center gap-3 mt-10">
+            {!canContinue && (
+              <p className="font-sans text-sm" style={{ color: '#A89880' }}>
+                Answer each procedure and the side-effects question to continue.
+              </p>
+            )}
+            <button
+              onClick={handleContinue}
+              disabled={!canContinue}
+              className="font-sans font-medium px-10 py-5 transition-all duration-300"
+              style={{
+                fontSize: 'clamp(16px, 2vw, 20px)',
+                background: canContinue ? '#C9A84C' : 'rgba(201,168,76,0.25)',
+                color: canContinue ? '#0A0A0F' : 'rgba(10,10,15,0.6)',
+                border: 'none',
+                borderRadius: '2px',
+                cursor: canContinue ? 'pointer' : 'not-allowed',
+              }}
+            >
+              Continue →
+            </button>
+          </div>
         </div>
       </div>
     </section>
