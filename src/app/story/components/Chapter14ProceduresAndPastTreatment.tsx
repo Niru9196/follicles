@@ -23,6 +23,7 @@ export default function Chapter14ProceduresAndPastTreatment({ onComplete }: Prop
   });
   const [pastTreatmentYesNo, setPastTreatmentYesNo] = useState<boolean | null>(data.sideEffectsPastTreatment.yesNo ?? null);
   const [description, setDescription] = useState(data.sideEffectsPastTreatment.description ?? '');
+  const [listening, setListening] = useState(false);
   const [visible, setVisible] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -67,6 +68,54 @@ export default function Chapter14ProceduresAndPastTreatment({ onComplete }: Prop
     { label: '4-6', value: '4to6' as const },
     { label: 'Over 6', value: 'over6' as const },
   ];
+
+  const handleVoiceDescription = () => {
+    if (typeof window === 'undefined') return;
+
+    type SpeechRecognitionCtor = new () => SpeechRecognitionLike;
+    type SpeechRecognitionLike = {
+      lang: string;
+      continuous: boolean;
+      interimResults: boolean;
+      onresult: ((event: SpeechRecognitionEventLike) => void) | null;
+      onerror: (() => void) | null;
+      onend: (() => void) | null;
+      start: () => void;
+    };
+    type SpeechRecognitionEventLike = {
+      results: ArrayLike<ArrayLike<{ transcript: string }>>;
+    };
+
+    const SpeechRecognition =
+      (window as unknown as { SpeechRecognition?: SpeechRecognitionCtor; webkitSpeechRecognition?: SpeechRecognitionCtor }).SpeechRecognition ||
+      (window as unknown as { SpeechRecognition?: SpeechRecognitionCtor; webkitSpeechRecognition?: SpeechRecognitionCtor }).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      alert('Voice input is not supported in this browser. Please type your response instead.');
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    setListening(true);
+
+    recognition.onresult = (event: SpeechRecognitionEventLike) => {
+      const transcript = Array.from(event.results)
+        .map((result) => result[0]?.transcript || '')
+        .join(' ')
+        .trim();
+
+      if (transcript) {
+        setDescription(prev => (prev ? `${prev} ${transcript}` : transcript));
+      }
+    };
+
+    recognition.onerror = () => setListening(false);
+    recognition.onend = () => setListening(false);
+    recognition.start();
+  };
 
   return (
     <section ref={ref} className="min-h-screen flex flex-col items-center justify-center px-6 py-24" style={{ background: '#0A0A0F' }}>
@@ -141,7 +190,26 @@ export default function Chapter14ProceduresAndPastTreatment({ onComplete }: Prop
               <button onClick={() => setPastTreatmentYesNo(false)} className="font-sans px-6 py-3" style={{ background: pastTreatmentYesNo === false ? 'rgba(201,168,76,0.12)' : 'transparent', color: pastTreatmentYesNo === false ? '#C9A84C' : '#A89880', border: `1px solid ${pastTreatmentYesNo === false ? '#C9A84C' : 'rgba(168,152,128,0.3)'}`, borderRadius: '2px', cursor: 'pointer' }}>No</button>
             </div>
             {pastTreatmentYesNo && (
-              <textarea value={description} onChange={e => setDescription(e.target.value)} rows={4} placeholder="Please describe" className="w-full max-w-xl p-4" style={{ background: 'rgba(245,240,232,0.02)', border: '1px solid rgba(168,152,128,0.3)', color: '#F5F0E8', borderRadius: '2px' }} />
+              <div className="space-y-3 max-w-xl">
+                <div className="flex items-center justify-between gap-3">
+                  <label className="font-sans" style={{ color: '#A89880' }}>Describe what happened</label>
+                  <button
+                    type="button"
+                    onClick={handleVoiceDescription}
+                    className="font-sans px-4 py-2"
+                    style={{
+                      background: listening ? 'rgba(201,168,76,0.12)' : 'transparent',
+                      color: listening ? '#C9A84C' : '#F5F0E8',
+                      border: `1px solid ${listening ? '#C9A84C' : 'rgba(168,152,128,0.3)'}`,
+                      borderRadius: '2px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {listening ? 'Listening…' : 'Use voice'}
+                  </button>
+                </div>
+                <textarea value={description} onChange={e => setDescription(e.target.value)} rows={4} placeholder="Please describe" className="w-full p-4" style={{ background: 'rgba(245,240,232,0.02)', border: '1px solid rgba(168,152,128,0.3)', color: '#F5F0E8', borderRadius: '2px' }} />
+              </div>
             )}
           </div>
 
