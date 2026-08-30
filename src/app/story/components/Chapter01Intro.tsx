@@ -159,12 +159,6 @@ export default function Chapter01Intro({ onBegin }: Props) {
               →
             </span>
           </button>
-          <p
-            className="mt-4 font-sans"
-            style={{ fontSize: '14px', color: 'rgba(168,152,128,0.6)' }}
-          >
-            About 5 minutes
-          </p>
         </div>
       </div>
 
