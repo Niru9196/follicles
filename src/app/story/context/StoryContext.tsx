@@ -408,6 +408,37 @@ const createDefaultProcedures = (): Record<ProcedureName, ProcedureUsage> => ({
   other: { done: null },
 });
 
+const STORAGE_KEY = 'follicle_story_session';
+
+const readStoredSession = (): { data: StoryData; currentChapter: number } | null => {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw) as { data?: StoryData; currentChapter?: number };
+    if (!parsed || typeof parsed !== 'object') return null;
+
+    return {
+      data: {
+        ...defaultData,
+        ...parsed.data,
+        habits: { ...defaultData.habits, ...(parsed.data?.habits ?? {}) },
+        products: { ...createDefaultProducts(), ...(parsed.data?.products ?? {}) },
+        procedures: { ...createDefaultProcedures(), ...(parsed.data?.procedures ?? {}) },
+        sideEffectsPastTreatment: {
+          ...defaultData.sideEffectsPastTreatment,
+          ...(parsed.data?.sideEffectsPastTreatment ?? {}),
+        },
+      },
+      currentChapter: typeof parsed.currentChapter === 'number' ? parsed.currentChapter : -1,
+    };
+  } catch {
+    return null;
+  }
+};
+
 export const defaultData: StoryData = {
   gender: null,
   ageHairLossBegan: null,
@@ -525,10 +556,21 @@ export function validateIntake(data: StoryData): { valid: boolean; missing: stri
 }
 
 export function StoryProvider({ children }: { children: ReactNode }) {
-  const [data, setData] = useState<StoryData>(defaultData);
+  const [data, setData] = useState<StoryData>(() => {
+    const stored = readStoredSession();
+    return stored?.data ?? defaultData;
+  });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ data, currentChapter: -1, savedAt: Date.now() }));
+  }, [data]);
 
   const clearSavedIntake = () => {
     setData(defaultData);
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem(STORAGE_KEY);
+    }
   };
 
   const setGender = (g: 'male' | 'female') =>

@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StoryProvider, useStory } from './context/StoryContext';
 import ChapterNav from './components/ChapterNav';
 import Chapter01Intro from './components/Chapter01Intro';
@@ -22,10 +22,35 @@ function StoryContent() {
   const { data, clearSavedIntake } = useStory();
   const [currentChapter, setCurrentChapter] = useState(-1);
   const [key, setKey] = useState(0);
+  const [skipPersist, setSkipPersist] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const raw = window.localStorage.getItem('follicle_story_session');
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as { currentChapter?: number };
+      if (typeof parsed.currentChapter === 'number') {
+        setCurrentChapter(parsed.currentChapter);
+      }
+    } catch {
+      // ignore invalid local storage state and continue from the beginning
+    }
+  }, []);
+
+  useEffect(() => {
+    if (skipPersist || typeof window === 'undefined') return;
+    const payload = { data, currentChapter, savedAt: Date.now() };
+    window.localStorage.setItem('follicle_story_session', JSON.stringify(payload));
+  }, [data, currentChapter, skipPersist]);
 
   const advance = () => setCurrentChapter(c => c + 1);
   const handleRestart = () => {
+    setSkipPersist(true);
     clearSavedIntake();
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem('follicle_story_session');
+    }
     setKey(k => k + 1);
     setCurrentChapter(-1);
   };

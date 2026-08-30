@@ -49,6 +49,18 @@ npm run build
 npm run start
 ```
 
+## Hosting and live demo
+
+This app is designed to deploy cleanly on Vercel with zero extra app-specific configuration. Vercel is the preferred hosting option because it works directly with the Next.js app, gives a live link without local setup, and matches the brief requirement for a working demo that does not require installation.
+
+Live demo:
+
+```text
+https://follicles.vercel.app/
+```
+
+This satisfies the requirement for a live link that works without the user needing to install dependencies or run the app locally.
+
 ## Stack and technical choices
 
 ### Built in-house
@@ -67,6 +79,8 @@ npm run start
 
 ### AI / model choices
 This version does not yet wire a real external model into the patient flow. The app currently uses a local, structured state model to drive the intake and final output. That was intentional: it keeps the product reliable, fast, and easy to reason about while preserving the PDF-backed intake structure.
+
+Voice input is also implemented with the browser’s native Web Speech API (`SpeechRecognition` / `webkitSpeechRecognition`) for short free-form moments in the flow, such as the opening hair-story prompt and other describe-it answers. This is a deliberate "build over buy" decision: the accuracy needs for short conversational phrases are low enough that the native browser API is sufficient, it is free, it runs entirely client-side with zero latency, and it avoids any external API keys or paid transcription service.
 
 If this were expanded in a real production setup, the most logical next step would be:
 - a secure backend service for storing and validating intake responses
@@ -94,6 +108,21 @@ We validated the experience in the actual app, not with mock-heavy tests. The ch
 - `['none']` means an explicit none choice
 - empty arrays are not treated as valid completed answers
 - final summary must reflect actual patient selections
+
+### Session persistence and autosave
+- The app stores the patient’s in-progress session in local storage so a mid-intake interruption does not force a restart.
+- When the page reloads, the app restores the prior chapter and data state automatically.
+- This addresses the core abandonment problem: patients can leave mid-flow and resume without losing their work.
+
+### Validation pass before completion
+- Before the final payoff screen, the app runs a validation pass over the canonical state to confirm every non-conditional question has the expected shape and value before it is allowed to render as complete.
+- This prevents the app from showing a “complete” intake if it is missing required data, inconsistent, or in an invalid edge-state combination.
+
+### Manual branch testing coverage
+- Male patient flow: menstrual and pregnancy follow-ups skip cleanly and do not show irrelevant fields.
+- Female patient flow: both menstrual and pregnancy questions appear and are answered appropriately.
+- Patient answering “None” to every multi-select: the app preserves explicit none states without collapsing them into empty or invalid arrays.
+- Patient who declines voice and uses typed/tapped input: the app falls back to normal input without breaking the story flow.
 
 ### Commands run
 
