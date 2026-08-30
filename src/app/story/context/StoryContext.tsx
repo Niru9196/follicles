@@ -16,7 +16,8 @@ export type Past6MonthsTrigger =
   | 'highStressOrEmotionalTrauma'
   | 'feverWithIllness'
   | 'recentSurgery'
-  | 'changeInLocationWaterOrAirQuality';
+  | 'changeInLocationWaterOrAirQuality'
+  | 'none';
 
 export interface ProductUsage {
   used: boolean | null;
@@ -184,6 +185,7 @@ const mapTrigger = (items: Past6MonthsTrigger[]): string[] => {
     feverWithIllness: 'Fever with illness (COVID, Dengue, Typhoid)',
     recentSurgery: 'Recent surgery',
     changeInLocationWaterOrAirQuality: 'Change in location/water/air quality',
+    none: 'None of these',
   };
   return items.map(item => labels[item]).filter(Boolean);
 };
@@ -458,6 +460,9 @@ export function validateIntake(data: StoryData): { valid: boolean; missing: stri
   if (data.acneOilySkinAdulthood === null) missing.push('Q8. Acne or oily skin in adulthood');
   if (data.excessBodyFacialHairGrowth === null) missing.push('Q9. Excess body or facial hair growth');
   if (data.past6Months.length === 0) missing.push('Q10. In the past 6 months');
+  if (data.past6Months.includes('none') && data.past6Months.length > 1) {
+    missing.push('Q10. In the past 6 months must not combine “None of these” with other triggers');
+  }
 
   if (!data.habits.smoking.used && data.habits.smoking.quantity) {
     missing.push('Q11. Smoking quantity is inconsistent');

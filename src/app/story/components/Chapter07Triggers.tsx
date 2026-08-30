@@ -19,7 +19,7 @@ const lifeEvents = ['Stress', 'Illness', 'Weight change', 'Surgery', 'Environmen
 
 export default function Chapter07Triggers({ onComplete }: Props) {
   const { setTriggers } = useStory();
-  const [selected, setSelected] = useState<Array<Past6MonthsTrigger | 'none'>>([]);
+  const [selected, setSelected] = useState<Past6MonthsTrigger[]>([]);
   const [visible, setVisible] = useState(false);
   const [timelineStep, setTimelineStep] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
@@ -41,7 +41,7 @@ export default function Chapter07Triggers({ onComplete }: Props) {
     return () => clearInterval(interval);
   }, [visible]);
 
-  const toggle = (id: Past6MonthsTrigger | 'none') => {
+  const toggle = (id: Past6MonthsTrigger) => {
     if (id === 'none') {
       setSelected(['none']);
       return;
@@ -53,8 +53,7 @@ export default function Chapter07Triggers({ onComplete }: Props) {
   };
 
   const handleContinue = () => {
-    const next = selected.filter((x): x is Past6MonthsTrigger => x !== 'none');
-    setTriggers(next);
+    setTriggers(selected);
     onComplete();
   };
 
