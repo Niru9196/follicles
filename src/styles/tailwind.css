@@ -1,0 +1,319 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,300;1,9..144,400;1,9..144,500&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+:root {
+  --evergreen: #1B4332;
+  --evergreen-deep: #0F2A1F;
+  --moss: #52796F;
+  --moss-light: #6B9E93;
+  --birch: #EAE2D6;
+  --birch-warm: #F5F0E8;
+  --gold: #C9A84C;
+  --gold-light: #D4B96A;
+  --text-dark: #1B4332;
+  --text-body: #3D5A50;
+  --text-muted: #52796F;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+  background-color: var(--birch);
+  color: var(--text-dark);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, .serif {
+  font-family: 'Fraunces', Georgia, serif;
+}
+
+/* Noise texture overlay */
+.noise-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9998;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-track { background: #0A0A0F; }
+::-webkit-scrollbar-thumb { background-color: rgba(201,168,76,0.4); border-radius: 4px; }
+
+::selection { background: rgba(201,168,76,0.3); color: #F5F0E8; }
+
+/* ─── Keyframes ─── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(32px); filter: blur(6px); }
+  to   { opacity: 1; transform: translateY(0);    filter: blur(0);   }
+}
+
+@keyframes fadeInLeft {
+  from { opacity: 0; transform: translateX(-28px); filter: blur(4px); }
+  to   { opacity: 1; transform: translateX(0);     filter: blur(0);   }
+}
+
+@keyframes fadeInRight {
+  from { opacity: 0; transform: translateX(28px); filter: blur(4px); }
+  to   { opacity: 1; transform: translateX(0);    filter: blur(0);   }
+}
+
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(0.94); filter: blur(4px); }
+  to   { opacity: 1; transform: scale(1);    filter: blur(0);   }
+}
+
+@keyframes floatCard {
+  0%, 100% { transform: translateY(0px) rotate(-1deg); }
+  50%       { transform: translateY(-8px) rotate(-1deg); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+
+@keyframes scrollBlurHero {
+  0%   { filter: blur(0px) brightness(1);   transform: scale(1);    }
+  100% { filter: blur(16px) brightness(0.6); transform: scale(1.04); }
+}
+
+@keyframes pulse-gold {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(201,168,76,0.4); }
+  50%       { box-shadow: 0 0 0 8px rgba(201,168,76,0); }
+}
+
+@keyframes marquee {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* ─── Scroll-triggered reveals ─── */
+.reveal {
+  opacity: 1;
+}
+
+.reveal-up {
+  opacity: 0;
+  transform: translateY(32px);
+  filter: blur(4px);
+  transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+              filter 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.reveal-left {
+  opacity: 0;
+  transform: translateX(-28px);
+  filter: blur(4px);
+  transition: opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.9s cubic-bezier(0.22, 1, 0.36, 1),
+              filter 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.reveal-right {
+  opacity: 0;
+  transform: translateX(28px);
+  filter: blur(4px);
+  transition: opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.9s cubic-bezier(0.22, 1, 0.36, 1),
+              filter 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.reveal-scale {
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.revealed {
+  opacity: 1 !important;
+  transform: none !important;
+  filter: blur(0) !important;
+}
+
+.delay-100 { transition-delay: 0.1s; }
+.delay-200 { transition-delay: 0.2s; }
+.delay-300 { transition-delay: 0.3s; }
+.delay-400 { transition-delay: 0.4s; }
+.delay-500 { transition-delay: 0.5s; }
+
+/* ─── Hero card float ─── */
+.float-card {
+  animation: floatCard 5s ease-in-out infinite;
+}
+
+/* ─── Gold CTA button ─── */
+.btn-gold {
+  background-color: var(--gold);
+  color: var(--evergreen-deep);
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.25s ease, transform 0.15s ease, box-shadow 0.25s ease;
+}
+
+.btn-gold:hover {
+  background-color: var(--gold-light);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(201,168,76,0.35);
+}
+
+.btn-gold:active {
+  transform: translateY(0);
+}
+
+/* ─── Outline button ─── */
+.btn-outline-evergreen {
+  background: transparent;
+  color: var(--evergreen);
+  border: 1.5px solid var(--evergreen);
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.btn-outline-evergreen:hover {
+  background-color: var(--evergreen);
+  color: var(--birch);
+}
+
+/* ─── Marquee ─── */
+.marquee-track {
+  display: inline-block;
+  animation: marquee 36s linear infinite;
+  white-space: nowrap;
+}
+
+/* ─── Zigzag image panels ─── */
+.zigzag-image {
+  position: relative;
+  overflow: hidden;
+  border-radius: 2px;
+}
+
+.zigzag-image img {
+  transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.zigzag-image:hover img {
+  transform: scale(1.03);
+}
+
+/* ─── Gold accent line ─── */
+.gold-rule {
+  height: 2px;
+  background: linear-gradient(90deg, var(--gold), transparent);
+  width: 48px;
+  margin-bottom: 1.25rem;
+}
+
+/* ─── Scalp scope thumbnail ─── */
+.scope-thumbnail {
+  border: 2px solid rgba(201,168,76,0.5);
+  box-shadow: 0 4px 16px rgba(27,67,50,0.2);
+}
+
+/* ─── Timeline progress ─── */
+.timeline-bar {
+  background: linear-gradient(90deg, var(--gold) var(--progress, 0%), rgba(82,121,111,0.2) var(--progress, 0%));
+  height: 3px;
+  border-radius: 2px;
+  transition: background 0.4s ease;
+}
+
+/* ─── Form step ─── */
+.form-option {
+  border: 1.5px solid rgba(82,121,111,0.3);
+  background: rgba(234,226,214,0.6);
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
+}
+
+.form-option:hover {
+  border-color: var(--moss);
+  background: rgba(234,226,214,0.9);
+  transform: translateY(-1px);
+}
+
+.form-option.selected {
+  border-color: var(--gold);
+  background: rgba(201,168,76,0.08);
+}
+
+/* ─── Input fields ─── */
+.field-input {
+  background: transparent;
+  border: none;
+  border-bottom: 1.5px solid rgba(82,121,111,0.4);
+  border-radius: 0;
+  color: var(--evergreen);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.9rem;
+  padding: 0.625rem 0;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.field-input::placeholder { color: rgba(82,121,111,0.5); }
+.field-input:focus { border-bottom-color: var(--gold); }
+
+/* ─── Concern badge ─── */
+.concern-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: var(--moss);
+  background: rgba(82,121,111,0.1);
+  border: 1px solid rgba(82,121,111,0.25);
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+}
+
+/* ─── Testimonial card ─── */
+.testimonial-card {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  background: rgba(234,226,214,0.88);
+  border: 1px solid rgba(255,255,255,0.6);
+  box-shadow: 0 24px 64px rgba(27,67,50,0.25), 0 4px 16px rgba(27,67,50,0.1);
+}
+
+/* ─── Section divider ─── */
+.section-divider {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(82,121,111,0.25), transparent);
+}
