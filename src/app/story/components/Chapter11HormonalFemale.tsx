@@ -7,8 +7,8 @@ interface Props { onComplete: () => void; }
 export default function Chapter11HormonalFemale({ onComplete }: Props) {
   const { setMenstrualCycle, setPregnancyHairLoss } = useStory();
   const [step, setStep] = useState(0);
-  const [cycle, setCycle] = useState<MenstrualCycleOption | null>('regular');
-  const [pregnancy, setPregnancy] = useState<PregnancyStatusOption | null>('notApplicable');
+  const [cycle, setCycle] = useState<MenstrualCycleOption | null>(null);
+  const [pregnancy, setPregnancy] = useState<PregnancyStatusOption | null>(null);
   const [visible, setVisible] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 

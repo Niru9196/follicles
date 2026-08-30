@@ -8,7 +8,7 @@ interface Props {
 
 export default function Chapter05Timeline({ onComplete }: Props) {
   const { data, setAgeOnset, setDuration } = useStory();
-  const [age, setAge] = useState<number | null>(data.ageOnset ?? null);
+  const [age, setAge] = useState<number | null>(data.ageHairLossBegan ?? null);
   const [duration, setDurationValue] = useState(data.duration ?? null);
   const [confirmed, setConfirmed] = useState(false);
   const [visible, setVisible] = useState(false);

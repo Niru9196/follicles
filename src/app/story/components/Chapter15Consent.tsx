@@ -8,8 +8,8 @@ interface Props {
 
 export default function Chapter15Consent({ onComplete }: Props) {
   const { data, setSamplePreference, setConsent } = useStory();
-  const [sampleChoice, setSampleChoice] = useState<'saliva' | 'blood' | 'either' | null>(data.sampleType ?? 'saliva');
-  const [consentGiven, setConsentGiven] = useState<boolean | null>(data.consentGeneticAnalysis ?? true);
+  const [sampleChoice, setSampleChoice] = useState<'saliva' | 'blood' | 'either' | null>(data.sampleType ?? null);
+  const [consentGiven, setConsentGiven] = useState<boolean | null>(data.consentGeneticAnalysis ?? null);
   const [visible, setVisible] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
