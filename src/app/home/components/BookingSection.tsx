@@ -7,36 +7,35 @@ type DurationOption = 'recent' | '3to6' | '6to12' | 'over1year' | '';
 type FormatOption = 'clinic' | 'virtual' | '';
 
 const concernOptions: { value: ConcernType; label: string; description: string; emoji: string }[] = [
-  { value: 'thinning',  label: 'Diffuse thinning',    description: 'Overall density loss, wider part line', emoji: '🌿' },
-  { value: 'patchy',    label: 'Patchy loss',          description: 'Circular or irregular bald patches',    emoji: '🔵' },
-  { value: 'receding',  label: 'Receding hairline',    description: 'Temple or front hairline recession',    emoji: '📐' },
-  { value: 'postpartum',label: 'Postpartum shedding',  description: 'Hair loss after pregnancy or birth',    emoji: '🌸' },
+  { value: 'thinning', label: 'Diffuse thinning', description: 'Overall density loss, wider part line', emoji: '🌿' },
+  { value: 'patchy', label: 'Patchy loss', description: 'Circular or irregular bald patches', emoji: '🔵' },
+  { value: 'receding', label: 'Receding hairline', description: 'Temple or front hairline recession', emoji: '📐' },
+  { value: 'postpartum', label: 'Postpartum shedding', description: 'Hair loss after pregnancy or birth', emoji: '🌸' },
 ];
 
 const durationOptions: { value: DurationOption; label: string }[] = [
-  { value: 'recent',    label: 'Less than 3 months' },
-  { value: '3to6',      label: '3 to 6 months' },
-  { value: '6to12',     label: '6 months to 1 year' },
+  { value: 'recent', label: 'Less than 3 months' },
+  { value: '3to6', label: '3 to 6 months' },
+  { value: '6to12', label: '6 months to 1 year' },
   { value: 'over1year', label: 'Over a year' },
 ];
 
 const formatOptions: { value: FormatOption; label: string; detail: string }[] = [
-  { value: 'clinic',  label: 'In-clinic',  detail: 'Trichoscope + full analysis · NYC / LA' },
-  { value: 'virtual', label: 'Virtual',    detail: 'Video consultation + at-home kit' },
+  { value: 'clinic', label: 'In-clinic', detail: 'Trichoscope + full analysis · NYC / LA' },
+  { value: 'virtual', label: 'Virtual', detail: 'Video consultation + at-home kit' },
 ];
 
 export default function BookingSection() {
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
-  const [concern,   setConcern]   = useState<ConcernType>('');
-  const [duration,  setDuration]  = useState<DurationOption>('');
-  const [format,    setFormat]    = useState<FormatOption>('');
-  const [name,      setName]      = useState('');
-  const [email,     setEmail]     = useState('');
+  const [concern, setConcern] = useState<ConcernType>('');
+  const [duration, setDuration] = useState<DurationOption>('');
+  const [format, setFormat] = useState<FormatOption>('');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
-  // PDF guide state
-  const [guideEmail,     setGuideEmail]     = useState('');
-  const [guideConcern,   setGuideConcern]   = useState('');
+  const [guideEmail, setGuideEmail] = useState('');
+  const [guideConcern, setGuideConcern] = useState('');
   const [guideSubmitted, setGuideSubmitted] = useState(false);
 
   const handleBookingSubmit = (e: React.FormEvent) => {
@@ -52,10 +51,7 @@ export default function BookingSection() {
   return (
     <section id="book" className="bg-birch-warm py-24 lg:py-32 overflow-hidden">
       <div className="max-w-7xl mx-auto px-6 lg:px-10">
-
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24">
-
-          {/* ── Booking form ── */}
           <div className="reveal-left">
             <div className="gold-rule" />
             <p className="text-xs font-medium tracking-[0.18em] uppercase text-moss mb-4">Book Your Analysis</p>
@@ -64,14 +60,13 @@ export default function BookingSection() {
               <em>that actually looks.</em>
             </h2>
             <p className="text-moss font-light leading-relaxed mb-10">
-              Three questions. That's all we need to match you with the right trichologist and prepare your consultation.
+              Three questions. That&apos;s all we need to match you with the right trichologist and prepare your consultation.
             </p>
 
             {!submitted ? (
               <form onSubmit={handleBookingSubmit}>
-                {/* Progress bar */}
                 <div className="flex gap-1.5 mb-10">
-                  {[1, 2, 3].map(s => (
+                  {[1, 2, 3].map((s) => (
                     <div
                       key={s}
                       className={`flex-1 h-1 rounded-full transition-all duration-500 ${step > s ? 'bg-gold' : step === s ? 'bg-gold/60' : 'bg-moss/20'}`}
@@ -79,14 +74,13 @@ export default function BookingSection() {
                   ))}
                 </div>
 
-                {/* Step 1: Concern */}
                 {step === 1 && (
                   <div>
                     <p className="text-sm font-medium text-evergreen mb-4">
-                      <span className="text-gold font-serif text-lg">01</span> &nbsp;What's your primary concern?
+                      <span className="text-gold font-serif text-lg">01</span> &nbsp;What&apos;s your primary concern?
                     </p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
-                      {concernOptions.map(opt => (
+                      {concernOptions.map((opt) => (
                         <button
                           key={opt.value}
                           type="button"
@@ -113,14 +107,13 @@ export default function BookingSection() {
                   </div>
                 )}
 
-                {/* Step 2: Duration */}
                 {step === 2 && (
                   <div>
                     <p className="text-sm font-medium text-evergreen mb-4">
                       <span className="text-gold font-serif text-lg">02</span> &nbsp;How long have you noticed it?
                     </p>
                     <div className="space-y-3 mb-8">
-                      {durationOptions.map(opt => (
+                      {durationOptions.map((opt) => (
                         <button
                           key={opt.value}
                           type="button"
@@ -153,14 +146,13 @@ export default function BookingSection() {
                   </div>
                 )}
 
-                {/* Step 3: Format + contact */}
                 {step === 3 && (
                   <div>
                     <p className="text-sm font-medium text-evergreen mb-4">
                       <span className="text-gold font-serif text-lg">03</span> &nbsp;How would you like to consult?
                     </p>
                     <div className="grid grid-cols-2 gap-3 mb-6">
-                      {formatOptions.map(opt => (
+                      {formatOptions.map((opt) => (
                         <button
                           key={opt.value}
                           type="button"
@@ -178,7 +170,7 @@ export default function BookingSection() {
                         <input
                           type="text"
                           value={name}
-                          onChange={e => setName(e.target.value)}
+                          onChange={(e) => setName(e.target.value)}
                           placeholder="Your name"
                           required
                           className="field-input"
@@ -189,7 +181,7 @@ export default function BookingSection() {
                         <input
                           type="email"
                           value={email}
-                          onChange={e => setEmail(e.target.value)}
+                          onChange={(e) => setEmail(e.target.value)}
                           placeholder="you@email.com"
                           required
                           className="field-input"
@@ -209,7 +201,7 @@ export default function BookingSection() {
                         </svg>
                       </button>
                     </div>
-                    <p className="text-xs text-moss/60 mt-3 font-light">No payment required to book. We'll confirm within 24 hours.</p>
+                    <p className="text-xs text-moss/60 mt-3 font-light">No payment required to book. We&apos;ll confirm within 24 hours.</p>
                   </div>
                 )}
               </form>
@@ -221,12 +213,11 @@ export default function BookingSection() {
                   </svg>
                 </div>
                 <h3 className="font-serif text-evergreen text-xl mb-2">Request received.</h3>
-                <p className="text-moss font-light text-sm leading-relaxed">We'll confirm your scalp analysis appointment within 24 hours. Check your inbox — we'll send prep instructions so we can make the most of your time.</p>
+                <p className="text-moss font-light text-sm leading-relaxed">We&apos;ll confirm your scalp analysis appointment within 24 hours. Check your inbox — we&apos;ll send prep instructions so we can make the most of your time.</p>
               </div>
             )}
           </div>
 
-          {/* ── PDF Guide secondary path ── */}
           <div id="guide" className="reveal-right delay-200">
             <div className="p-8 lg:p-10 rounded-2xl bg-evergreen border border-white/10 h-full flex flex-col justify-between">
               <div>
@@ -246,7 +237,7 @@ export default function BookingSection() {
                     'Symptom-to-cause mapping guide',
                     'What your scalp texture means',
                     'When to see a trichologist vs. GP',
-                  ].map(item => (
+                  ].map((item) => (
                     <li key={item} className="flex items-start gap-3 text-sm text-birch/70 font-light">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mt-0.5 flex-shrink-0">
                         <path d="M20 6L9 17l-5-5" />
@@ -263,13 +254,13 @@ export default function BookingSection() {
                     <label className="text-xs text-birch/50 uppercase tracking-wider font-medium block mb-1">Your main concern</label>
                     <select
                       value={guideConcern}
-                      onChange={e => setGuideConcern(e.target.value)}
+                      onChange={(e) => setGuideConcern(e.target.value)}
                       required
                       className="field-input"
                       style={{ color: guideConcern ? '#EAE2D6' : 'rgba(234,226,214,0.4)', borderBottomColor: 'rgba(234,226,214,0.2)' }}
                     >
                       <option value="" disabled>Select your concern</option>
-                      {concernOptions.map(o => (
+                      {concernOptions.map((o) => (
                         <option key={o.value} value={o.value} style={{ background: '#1B4332', color: '#EAE2D6' }}>{o.label}</option>
                       ))}
                     </select>
@@ -279,7 +270,7 @@ export default function BookingSection() {
                     <input
                       type="email"
                       value={guideEmail}
-                      onChange={e => setGuideEmail(e.target.value)}
+                      onChange={(e) => setGuideEmail(e.target.value)}
                       placeholder="you@email.com"
                       required
                       className="field-input"
@@ -301,7 +292,7 @@ export default function BookingSection() {
               ) : (
                 <div className="p-6 rounded-xl bg-white/5 border border-white/10 text-center">
                   <p className="font-serif text-birch text-lg mb-2">Guide on its way.</p>
-                  <p className="text-birch/55 text-sm font-light">Check your inbox — and when you're ready, your first scalp analysis is waiting.</p>
+                  <p className="text-birch/55 text-sm font-light">Check your inbox — and when you&apos;re ready, your first scalp analysis is waiting.</p>
                   <a href="#book" className="btn-gold mt-4 inline-flex px-5 py-2.5 rounded-full text-xs items-center gap-1.5">
                     Book When Ready
                   </a>
@@ -309,7 +300,6 @@ export default function BookingSection() {
               )}
             </div>
           </div>
-
         </div>
       </div>
     </section>

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import AppLogo from '@/components/ui/AppLogo';
 
 export default function Header() {
@@ -15,8 +16,8 @@ export default function Header() {
 
   const links = [
     { label: 'How It Works', href: '#diagnosis' },
-    { label: 'Treatments',   href: '#treatments' },
-    { label: 'Outcomes',     href: '#outcomes' },
+    { label: 'Treatments', href: '#treatments' },
+    { label: 'Outcomes', href: '#outcomes' },
   ];
 
   return (
@@ -29,18 +30,18 @@ export default function Header() {
     >
       <div className="max-w-7xl mx-auto px-6 lg:px-10 h-20 flex items-center justify-between">
         {/* Logo */}
-        <a href="/" className="flex items-center gap-2 group">
+        <Link href="/" className="flex items-center gap-2 group">
           <AppLogo
             size={32}
             iconName="SparklesIcon"
             text="Follicle"
             className="text-evergreen"
           />
-        </a>
+        </Link>
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-10">
-          {links?.map(l => (
+          {links?.map((l) => (
             <a
               key={l?.href}
               href={l?.href}
@@ -80,7 +81,7 @@ export default function Header() {
       {/* Mobile menu */}
       {menuOpen && (
         <div className="md:hidden bg-birch/98 backdrop-blur-md border-t border-moss/10 px-6 pb-6 pt-4">
-          {links?.map(l => (
+          {links?.map((l) => (
             <a
               key={l?.href}
               href={l?.href}
