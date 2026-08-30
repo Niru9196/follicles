@@ -147,7 +147,12 @@ In one week, the app can be pushed much closer to the intended hair consultation
    - Introduce a simple structure: frame the problem visually, explain briefly, then ask the question
    - Keep the story-first feel while making the question easier to understand
 
-3. Improve comprehension without turning it into a form
+3. Voice-led assistance and conversational guidance
+   - Voice can be used as an additional layer to make the experience feel closer to a real hair consultation.
+   - A patient could hear the question read aloud, respond naturally, or use voice prompts for certain sections.
+   - This would reduce reading load, make the journey feel more human, and improve accessibility for users who prefer spoken guidance.
+
+4. Improve comprehension without turning it into a form
    - Less dense text blocks
    - More conversational explanation before answer selection
    - Visual prompts that support understanding without feeling clinical or rigid
@@ -161,7 +166,12 @@ In one week, the app can be pushed much closer to the intended hair consultation
    - Dark premium palette is fine, but it needs stronger hair-specific visual references
    - Add consultation-like elements such as hairline diagrams, scalp zone cues, and storytelling visuals that feel rooted in expertise
 
-6. Make the experience feel more trustworthy and human
+6. Voice-first and conversational UX enhancement
+   - Add voice prompts where appropriate to make the intake feel like a consultation rather than a static screen-based form
+   - Voice can help explain the rationale behind each question, especially for more complicated or sensitive topics
+   - This should complement the visual design, not replace it
+
+7. Make the experience feel more trustworthy and human
    - Add warmer, more natural microcopy
    - Emphasize reassurance and understanding rather than interrogation
    - Present the experience as a consultation journey, not a questionnaire
@@ -180,3 +190,5 @@ The current app is a good foundation, but it still needs a stronger hair-specifi
 ## Notes
 
 This project is intentionally designed to feel like a guided story rather than a traditional questionnaire. The product and the data model are aligned around one principle: the patient should feel heard, and the final structured output should remain clinically faithful to their real answer set.
+
+Voice has also been considered as a complementary layer in the product direction. It can make the consultation feel even more natural by reading questions aloud, guiding the user conversationally, and reducing text-heavy friction in a highly personal journey.
