@@ -7,33 +7,10 @@ interface Props {
 }
 
 export default function Chapter16Payoff({ onRestart }: Props) {
-  const { data } = useStory();
+  const { data, clearSavedIntake } = useStory();
   const [step, setStep] = useState(0);
   const [visible, setVisible] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) setVisible(true); },
-      { threshold: 0.2 }
-    );
-    if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    if (!visible) return;
-    const timers = [
-      setTimeout(() => setStep(1), 400),
-      setTimeout(() => setStep(2), 1200),
-      setTimeout(() => setStep(3), 2000),
-      setTimeout(() => setStep(4), 2800),
-      setTimeout(() => setStep(5), 3600),
-      setTimeout(() => setStep(6), 4400),
-      setTimeout(() => setStep(7), 5200),
-    ];
-    return () => timers.forEach(clearTimeout);
-  }, [visible]);
 
   const patternLabels: Record<string, string> = {
     hairline: 'a changing hairline',
@@ -56,16 +33,80 @@ export default function Chapter16Payoff({ onRestart }: Props) {
   const familyLabels: Record<string, string> = {
     father: 'father',
     mother: 'mother',
-    brother: 'brother',
-    sister: 'sister',
+    siblings: 'siblings',
+    noFamilyHistory: 'no known family history',
   };
 
+  const diagnosisLabels: Record<string, string> = {
+    pcos: 'PCOS / PCOD',
+    thyroid: 'thyroid disorder',
+    diabetes: 'diabetes',
+    autoimmune: 'autoimmune disease',
+    anemia: 'anemia',
+    none: 'no diagnosed conditions',
+  };
+
+  const productLabels: Record<string, string> = {
+    medicatedShampoos: 'medicated shampoos',
+    hairOilsOrSerums: 'hair oils or serums',
+    topicalMinoxidil: 'topical minoxidil',
+    oralMinoxidil: 'oral minoxidil',
+    supplements: 'supplements',
+  };
+
+  const habitLabels: string[] = [];
+  if (data.habits.smoking.used) habitLabels.push(`smoking (${data.habits.smoking.quantity ?? 'some'})`);
+  if (data.habits.alcohol) habitLabels.push('alcohol use');
+  if (data.habits.hardWater) habitLabels.push('hard water');
+  if (data.habits.hairWashFrequency) habitLabels.push(`wash frequency: ${data.habits.hairWashFrequency}`);
+  if (data.habits.heatingOrStylingChemicals) habitLabels.push('heat / styling chemicals');
+  if (data.habits.salonTreatments.used) habitLabels.push('salon treatments');
+
+  const triedProducts = Object.entries(data.products)
+    .filter(([, value]) => value.used)
+    .map(([key]) => productLabels[key] || key);
+
+  const procedureLabels: Record<string, string> = {
+    prp: 'PRP',
+    gfcOrIprf: 'GFC / iPRF',
+    stemCellsOrExosomes: 'stem cells / exosomes',
+    hairTransplant: 'hair transplant',
+    other: 'other in-clinic procedure',
+  };
+
+  const completedProcedures = Object.entries(data.procedures)
+    .filter(([, value]) => value.done)
+    .map(([key, value]) => {
+      const label = procedureLabels[key] || key;
+      const sessionDetail = value.sessions ? ` (${value.sessions})` : '';
+      const helpedDetail = value.helped !== undefined ? `, ${value.helped ? 'helped' : 'did not help'}` : '';
+      return `${label}${sessionDetail}${helpedDetail}`;
+    });
+
+  const sideEffectSummary = data.sideEffectsPastTreatment.yesNo === null
+    ? null
+    : data.sideEffectsPastTreatment.yesNo
+      ? `past treatment had side effects or poor response${data.sideEffectsPastTreatment.description ? `: ${data.sideEffectsPastTreatment.description}` : ''}`
+      : 'past treatment did not have side effects or a poor response';
+
   const storyLines: Array<{ text: React.ReactNode; show: boolean }> = [
+    {
+      text: data.gender ? (
+        <>The selected pattern was <span style={{ color: '#C9A84C', fontWeight: 600 }}>{data.gender === 'male' ? 'male' : 'female'}</span>.</>
+      ) : null,
+      show: !!data.gender,
+    },
     {
       text: data.ageOnset ? (
         <>You first noticed changes around <span style={{ color: '#C9A84C', fontWeight: 600 }}>{data.ageOnset}</span>.</>
       ) : null,
       show: !!data.ageOnset,
+    },
+    {
+      text: data.duration ? (
+        <>The hair loss has been ongoing for <span style={{ color: '#C9A84C', fontWeight: 600 }}>{data.duration === 'under6months' ? 'under 6 months' : data.duration === '6to12months' ? '6 to 12 months' : 'over a year'}</span>.</>
+      ) : null,
+      show: !!data.duration,
     },
     {
       text: data.patterns.length > 0 ? (
@@ -92,16 +133,64 @@ export default function Chapter16Payoff({ onRestart }: Props) {
       show: data.familyHistory.length > 0,
     },
     {
-      text: data.treatments.length > 0 ? (
-        <>You&apos;ve tried <span style={{ color: '#C9A84C', fontWeight: 600 }}>{data.treatments.map(t => t.name).join(', ')}</span>.</>
+      text: data.diagnosedConditions.length > 0 ? (
+        <>You mentioned <span style={{ color: '#C9A84C', fontWeight: 600 }}>{data.diagnosedConditions.map(item => diagnosisLabels[item] || item).join(', ')}</span> as potentially relevant.</>
       ) : null,
-      show: data.treatments.length > 0,
+      show: data.diagnosedConditions.length > 0,
     },
     {
-      text: data.healthConditions.length > 0 ? (
-        <>You mentioned <span style={{ color: '#C9A84C', fontWeight: 600 }}>{data.healthConditions.join(', ')}</span> as potentially relevant.</>
+      text: data.acneOilySkinAdulthood !== null ? (
+        <>Acne or oily skin in adulthood: <span style={{ color: '#C9A84C', fontWeight: 600 }}>{data.acneOilySkinAdulthood ? 'yes' : 'no'}</span>.</>
       ) : null,
-      show: data.healthConditions.length > 0,
+      show: data.acneOilySkinAdulthood !== null,
+    },
+    {
+      text: data.excessBodyFacialHairGrowth !== null ? (
+        <>Excess body or facial hair growth: <span style={{ color: '#C9A84C', fontWeight: 600 }}>{data.excessBodyFacialHairGrowth ? 'yes' : 'no'}</span>.</>
+      ) : null,
+      show: data.excessBodyFacialHairGrowth !== null,
+    },
+    {
+      text: data.gender === 'female' && (data.menstrualCycle || data.pregnancyHairLoss) ? (
+        <>Hormonal context includes <span style={{ color: '#C9A84C', fontWeight: 600 }}>{[data.menstrualCycle ? `cycle: ${data.menstrualCycle}` : null, data.pregnancyHairLoss ? `pregnancy: ${data.pregnancyHairLoss}` : null].filter(Boolean).join('; ')}</span>.</>
+      ) : null,
+      show: data.gender === 'female' && (!!data.menstrualCycle || !!data.pregnancyHairLoss),
+    },
+    {
+      text: triedProducts.length > 0 ? (
+        <>You&apos;ve tried <span style={{ color: '#C9A84C', fontWeight: 600 }}>{triedProducts.join(', ')}</span>.</>
+      ) : null,
+      show: triedProducts.length > 0,
+    },
+    {
+      text: completedProcedures.length > 0 ? (
+        <>Past in-clinic care includes <span style={{ color: '#C9A84C', fontWeight: 600 }}>{completedProcedures.join(', ')}</span>.</>
+      ) : null,
+      show: completedProcedures.length > 0,
+    },
+    {
+      text: sideEffectSummary ? (
+        <>This includes <span style={{ color: '#C9A84C', fontWeight: 600 }}>{sideEffectSummary}</span>.</>
+      ) : null,
+      show: !!sideEffectSummary,
+    },
+    {
+      text: habitLabels.length > 0 ? (
+        <>Lifestyle notes include <span style={{ color: '#C9A84C', fontWeight: 600 }}>{habitLabels.join(', ')}</span>.</>
+      ) : null,
+      show: habitLabels.length > 0,
+    },
+    {
+      text: data.sampleType ? (
+        <>Preferred sample type: <span style={{ color: '#C9A84C', fontWeight: 600 }}>{data.sampleType}</span>.</>
+      ) : null,
+      show: !!data.sampleType,
+    },
+    {
+      text: data.consentGeneticAnalysis !== null ? (
+        <>Consent status: <span style={{ color: '#C9A84C', fontWeight: 600 }}>{data.consentGeneticAnalysis ? 'consented' : 'not yet consented'}</span>.</>
+      ) : null,
+      show: data.consentGeneticAnalysis !== null,
     },
   ].filter(l => l.show);
 
@@ -110,6 +199,23 @@ export default function Chapter16Payoff({ onRestart }: Props) {
     transform: step > i ? 'translateY(0)' : 'translateY(16px)',
     transition: 'opacity 0.8s cubic-bezier(0.22,1,0.36,1), transform 0.8s cubic-bezier(0.22,1,0.36,1)',
   });
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setVisible(true); },
+      { threshold: 0.2 }
+    );
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!visible) return;
+    const timers = storyLines.map((_, index) =>
+      setTimeout(() => setStep(index + 1), 400 + index * 700)
+    );
+    return () => timers.forEach(clearTimeout);
+  }, [visible, storyLines.length]);
 
   return (
     <section
@@ -177,8 +283,8 @@ export default function Chapter16Payoff({ onRestart }: Props) {
         {/* Conclusion */}
         <div
           style={{
-            opacity: step >= Math.min(storyLines.length, 6) ? 1 : 0,
-            transform: step >= Math.min(storyLines.length, 6) ? 'translateY(0)' : 'translateY(16px)',
+            opacity: step >= Math.max(6, storyLines.length - 1) ? 1 : 0,
+            transform: step >= Math.max(6, storyLines.length - 1) ? 'translateY(0)' : 'translateY(16px)',
             transition: 'all 0.8s cubic-bezier(0.22,1,0.36,1)',
           }}
         >
@@ -200,6 +306,7 @@ export default function Chapter16Payoff({ onRestart }: Props) {
 
           <div className="flex flex-col sm:flex-row gap-4 items-center">
             <button
+              onClick={() => clearSavedIntake()}
               className="font-sans font-medium px-10 py-5 transition-all duration-300"
               style={{
                 fontSize: 'clamp(16px, 2vw, 20px)',

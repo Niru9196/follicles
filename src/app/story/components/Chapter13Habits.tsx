@@ -1,217 +1,144 @@
 'use client';
 import React, { useEffect, useRef, useState } from 'react';
-import { useStory } from '../context/StoryContext';
+import { HairWashFrequency, SmokingQuantity, useStory } from '../context/StoryContext';
 
-interface Props {
-  onComplete: () => void;
-}
+interface Props { onComplete: () => void; }
 
-const habitItems = [
-  { id: 'smoking', emoji: '🚬', label: 'Smoking' },
-  { id: 'alcohol', emoji: '🍷', label: 'Alcohol' },
-  { id: 'washing', emoji: '🚿', label: 'Daily hair washing' },
-  { id: 'heat', emoji: '🔥', label: 'Heat styling' },
-  { id: 'chemical', emoji: '🧪', label: 'Chemical treatments' },
-  { id: 'salon', emoji: '✂️', label: 'Regular salon treatments' },
-  { id: 'stress', emoji: '😰', label: 'High stress' },
-  { id: 'sleep', emoji: '😴', label: 'Poor sleep' },
+const smokingOptions: Array<{ label: string; value: SmokingQuantity }> = [
+  { label: 'Under 5 a day', value: 'under5' },
+  { label: '5–10 a day', value: '5to10' },
+  { label: 'Over 10 a day', value: 'over10' },
 ];
 
-const daySteps = [
-  { emoji: '☀️', label: 'Morning' },
-  { emoji: '💼', label: 'Work' },
-  { emoji: '🏋️', label: 'Gym' },
-  { emoji: '🚿', label: 'Shower' },
-  { emoji: '💇', label: 'Styling' },
-  { emoji: '🌙', label: 'Night' },
+const hairWashOptions: Array<{ label: string; value: HairWashFrequency }> = [
+  { label: 'Daily', value: 'daily' },
+  { label: 'Alternate days', value: 'alternateDays' },
+  { label: 'Weekly', value: 'weekly' },
 ];
+
+const salonOptions = ['Keratin', 'Rebonding', 'Smoothening', 'Other'];
 
 export default function Chapter13Habits({ onComplete }: Props) {
   const { setHabits } = useStory();
-  const [selected, setSelected] = useState<string[]>([]);
-  const [noneSelected, setNoneSelected] = useState(false);
-  const [dayStep, setDayStep] = useState(0);
+  const [smokingUsed, setSmokingUsed] = useState(false);
+  const [smokingQuantity, setSmokingQuantity] = useState<SmokingQuantity | undefined>('under5');
+  const [alcohol, setAlcohol] = useState<boolean | null>(false);
+  const [hardWater, setHardWater] = useState<boolean | null>(false);
+  const [hairWashFrequency, setHairWashFrequency] = useState<HairWashFrequency | null>('alternateDays');
+  const [heatingOrStylingChemicals, setHeatingOrStylingChemicals] = useState<boolean | null>(false);
+  const [salonTreatmentsUsed, setSalonTreatmentsUsed] = useState<boolean | null>(false);
+  const [salonSelections, setSalonSelections] = useState<string[]>([]);
+  const [salonOther, setSalonOther] = useState('');
   const [visible, setVisible] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) setVisible(true); },
-      { threshold: 0.2 }
-    );
+    const observer = new IntersectionObserver(([entry]) => { if (entry.isIntersecting) setVisible(true); }, { threshold: 0.2 });
     if (ref.current) observer.observe(ref.current);
     return () => observer.disconnect();
   }, []);
 
-  useEffect(() => {
-    if (!visible) return;
-    const interval = setInterval(() => {
-      setDayStep(s => (s + 1) % daySteps.length);
-    }, 1200);
-    return () => clearInterval(interval);
-  }, [visible]);
-
-  const toggle = (id: string) => {
-    setNoneSelected(false);
-    setSelected(prev =>
-      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
-    );
-  };
-
-  const handleNone = () => {
-    setSelected([]);
-    setNoneSelected(true);
+  const toggleSalon = (value: string) => {
+    setSalonSelections(prev => prev.includes(value) ? prev.filter(item => item !== value) : [...prev, value]);
   };
 
   const handleContinue = () => {
-    setHabits(selected);
+    setHabits({
+      smoking: { used: smokingUsed, quantity: smokingUsed ? smokingQuantity : undefined },
+      alcohol: alcohol ?? false,
+      hardWater: hardWater ?? false,
+      hairWashFrequency,
+      heatingOrStylingChemicals: heatingOrStylingChemicals ?? false,
+      salonTreatments: { used: salonTreatmentsUsed ?? false, treatments: salonTreatmentsUsed ? salonSelections : [], other: salonTreatmentsUsed && salonSelections.includes('Other') ? salonOther : undefined },
+    });
     onComplete();
   };
 
   return (
-    <section
-      ref={ref}
-      className="min-h-screen flex flex-col items-center justify-center px-6 py-24"
-      style={{ background: '#0A0A0F' }}
-    >
+    <section ref={ref} className="min-h-screen flex flex-col items-center justify-center px-6 py-24" style={{ background: '#0A0A0F' }}>
       <div className="max-w-4xl mx-auto w-full">
-        <div
-          style={{
-            opacity: visible ? 1 : 0,
-            transform: visible ? 'translateY(0)' : 'translateY(32px)',
-            transition: 'all 1s cubic-bezier(0.22,1,0.36,1)',
-          }}
-        >
-          <p className="font-sans text-sm tracking-widest mb-4" style={{ color: '#C9A84C' }}>
-            TREATMENTS
-          </p>
-          <h2
-            className="font-serif font-light mb-4"
-            style={{ fontSize: 'clamp(32px, 5vw, 56px)', color: '#F5F0E8', lineHeight: 1.1 }}
-          >
+        <div style={{ opacity: visible ? 1 : 0, transform: visible ? 'translateY(0)' : 'translateY(32px)', transition: 'all 1s cubic-bezier(0.22,1,0.36,1)' }}>
+          <p className="font-sans text-sm tracking-widest mb-4" style={{ color: '#C9A84C' }}>C · LIFESTYLE AND ENVIRONMENTAL TRIGGERS</p>
+          <h2 className="font-serif font-light mb-4" style={{ fontSize: 'clamp(32px, 5vw, 56px)', color: '#F5F0E8', lineHeight: 1.1 }}>
             A few things<br />
             <span style={{ fontStyle: 'italic', color: '#C9A84C' }}>about your day.</span>
           </h2>
         </div>
 
-        {/* Animated day cycle */}
-        <div
-          className="flex items-center justify-center gap-3 mb-12 overflow-x-auto pb-2"
-          style={{
-            opacity: visible ? 1 : 0,
-            transition: 'opacity 1s ease 0.3s',
-          }}
-        >
-          {daySteps.map((step, i) => (
-            <React.Fragment key={i}>
-              <div
-                className="flex flex-col items-center gap-2 flex-shrink-0 transition-all duration-500"
-                style={{
-                  opacity: i === dayStep ? 1 : 0.3,
-                  transform: i === dayStep ? 'scale(1.15)' : 'scale(1)',
-                }}
-              >
-                <div
-                  className="rounded-full flex items-center justify-center"
-                  style={{
-                    width: 52,
-                    height: 52,
-                    background: i === dayStep ? 'rgba(201,168,76,0.15)' : 'rgba(245,240,232,0.05)',
-                    border: `1px solid ${i === dayStep ? '#C9A84C' : 'rgba(245,240,232,0.1)'}`,
-                    fontSize: '22px',
-                  }}
-                >
-                  {step.emoji}
-                </div>
-                <span className="font-sans" style={{ fontSize: '11px', color: i === dayStep ? '#C9A84C' : 'rgba(168,152,128,0.5)' }}>
-                  {step.label}
-                </span>
+        <div className="space-y-8 mt-12" style={{ opacity: visible ? 1 : 0, transition: 'opacity 1s ease 0.4s' }}>
+          <div>
+            <p className="font-sans font-medium mb-3" style={{ fontSize: '20px', color: '#F5F0E8' }}>Smoking</p>
+            <div className="flex gap-3 flex-wrap">
+              <button onClick={() => { setSmokingUsed(true); if (!smokingQuantity) setSmokingQuantity('under5'); }} className="font-sans px-6 py-3" style={{ background: smokingUsed ? 'rgba(201,168,76,0.12)' : 'transparent', color: smokingUsed ? '#C9A84C' : '#A89880', border: `1px solid ${smokingUsed ? '#C9A84C' : 'rgba(168,152,128,0.3)'}`, borderRadius: '2px', cursor: 'pointer' }}>Yes</button>
+              <button onClick={() => { setSmokingUsed(false); setSmokingQuantity(undefined); }} className="font-sans px-6 py-3" style={{ background: !smokingUsed && smokingUsed !== null ? 'rgba(201,168,76,0.12)' : 'transparent', color: !smokingUsed ? '#C9A84C' : '#A89880', border: `1px solid ${!smokingUsed ? '#C9A84C' : 'rgba(168,152,128,0.3)'}`, borderRadius: '2px', cursor: 'pointer' }}>No</button>
+            </div>
+            {smokingUsed && (
+              <div className="mt-4 flex gap-3 flex-wrap">
+                {smokingOptions.map(option => (
+                  <button key={option.value} onClick={() => setSmokingQuantity(option.value)} className="font-sans px-4 py-3" style={{ background: smokingQuantity === option.value ? 'rgba(201,168,76,0.12)' : 'transparent', color: smokingQuantity === option.value ? '#C9A84C' : '#A89880', border: `1px solid ${smokingQuantity === option.value ? '#C9A84C' : 'rgba(168,152,128,0.3)'}`, borderRadius: '2px', cursor: 'pointer' }}>{option.label}</button>
+                ))}
               </div>
-              {i < daySteps.length - 1 && (
-                <div style={{ width: '16px', height: '1px', background: 'rgba(201,168,76,0.2)', flexShrink: 0 }} />
-              )}
-            </React.Fragment>
-          ))}
-        </div>
+            )}
+          </div>
 
-        <div
-          className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8"
-          style={{
-            opacity: visible ? 1 : 0,
-            transition: 'opacity 1s ease 0.4s',
-          }}
-        >
-          {habitItems.map((item, i) => {
-            const isActive = selected.includes(item.id);
-            return (
-              <button
-                key={item.id}
-                onClick={() => toggle(item.id)}
-                className="flex flex-col items-center justify-center gap-3 p-6 transition-all duration-300"
-                style={{
-                  background: isActive ? 'rgba(201,168,76,0.12)' : 'rgba(245,240,232,0.03)',
-                  border: `1.5px solid ${isActive ? '#C9A84C' : 'rgba(245,240,232,0.08)'}`,
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  minHeight: '110px',
-                  opacity: visible ? 1 : 0,
-                  transform: visible ? 'translateY(0)' : 'translateY(16px)',
-                  transition: `all 0.5s cubic-bezier(0.22,1,0.36,1) ${i * 60}ms`,
-                }}
-              >
-                <span style={{ fontSize: '32px' }}>{item.emoji}</span>
-                <span
-                  className="font-sans font-medium text-center"
-                  style={{ fontSize: '14px', color: isActive ? '#C9A84C' : '#F5F0E8', lineHeight: 1.3 }}
-                >
-                  {item.label}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+          <div>
+            <p className="font-sans font-medium mb-3" style={{ fontSize: '20px', color: '#F5F0E8' }}>Alcohol</p>
+            <div className="flex gap-3 flex-wrap">
+              <button onClick={() => setAlcohol(true)} className="font-sans px-6 py-3" style={{ background: alcohol === true ? 'rgba(201,168,76,0.12)' : 'transparent', color: alcohol === true ? '#C9A84C' : '#A89880', border: `1px solid ${alcohol === true ? '#C9A84C' : 'rgba(168,152,128,0.3)'}`, borderRadius: '2px', cursor: 'pointer' }}>Yes</button>
+              <button onClick={() => setAlcohol(false)} className="font-sans px-6 py-3" style={{ background: alcohol === false ? 'rgba(201,168,76,0.12)' : 'transparent', color: alcohol === false ? '#C9A84C' : '#A89880', border: `1px solid ${alcohol === false ? '#C9A84C' : 'rgba(168,152,128,0.3)'}`, borderRadius: '2px', cursor: 'pointer' }}>No</button>
+            </div>
+          </div>
 
-        <div
-          className="flex flex-col sm:flex-row gap-4 items-center justify-center"
-          style={{
-            opacity: visible ? 1 : 0,
-            transition: 'opacity 1s ease 0.5s',
-          }}
-        >
-          <button
-            onClick={handleNone}
-            className="font-sans px-8 py-4 transition-all duration-300"
-            style={{
-              fontSize: '16px',
-              color: noneSelected ? '#C9A84C' : '#A89880',
-              border: `1px solid ${noneSelected ? '#C9A84C' : 'rgba(168,152,128,0.3)'}`,
-              borderRadius: '2px',
-              background: noneSelected ? 'rgba(201,168,76,0.08)' : 'transparent',
-              cursor: 'pointer',
-              minHeight: '56px',
-            }}
-          >
-            None of these
-          </button>
+          <div>
+            <p className="font-sans font-medium mb-3" style={{ fontSize: '20px', color: '#F5F0E8' }}>Hard water for hair wash</p>
+            <div className="flex gap-3 flex-wrap">
+              <button onClick={() => setHardWater(true)} className="font-sans px-6 py-3" style={{ background: hardWater === true ? 'rgba(201,168,76,0.12)' : 'transparent', color: hardWater === true ? '#C9A84C' : '#A89880', border: `1px solid ${hardWater === true ? '#C9A84C' : 'rgba(168,152,128,0.3)'}`, borderRadius: '2px', cursor: 'pointer' }}>Yes</button>
+              <button onClick={() => setHardWater(false)} className="font-sans px-6 py-3" style={{ background: hardWater === false ? 'rgba(201,168,76,0.12)' : 'transparent', color: hardWater === false ? '#C9A84C' : '#A89880', border: `1px solid ${hardWater === false ? '#C9A84C' : 'rgba(168,152,128,0.3)'}`, borderRadius: '2px', cursor: 'pointer' }}>No</button>
+            </div>
+          </div>
 
-          {(selected.length > 0 || noneSelected) && (
-            <button
-              onClick={handleContinue}
-              className="font-sans font-medium px-10 py-5 transition-all duration-300"
-              style={{
-                fontSize: 'clamp(16px, 2vw, 20px)',
-                background: '#C9A84C',
-                color: '#0A0A0F',
-                border: 'none',
-                borderRadius: '2px',
-                cursor: 'pointer',
-              }}
-              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = '#D4B96A'; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = '#C9A84C'; }}
-            >
+          <div>
+            <p className="font-sans font-medium mb-3" style={{ fontSize: '20px', color: '#F5F0E8' }}>Hair wash frequency</p>
+            <div className="flex gap-3 flex-wrap">
+              {hairWashOptions.map(option => (
+                <button key={option.value} onClick={() => setHairWashFrequency(option.value)} className="font-sans px-5 py-3" style={{ background: hairWashFrequency === option.value ? 'rgba(201,168,76,0.12)' : 'transparent', color: hairWashFrequency === option.value ? '#C9A84C' : '#A89880', border: `1px solid ${hairWashFrequency === option.value ? '#C9A84C' : 'rgba(168,152,128,0.3)'}`, borderRadius: '2px', cursor: 'pointer' }}>{option.label}</button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <p className="font-sans font-medium mb-3" style={{ fontSize: '20px', color: '#F5F0E8' }}>Heating tools or styling chemicals</p>
+            <div className="flex gap-3 flex-wrap">
+              <button onClick={() => setHeatingOrStylingChemicals(true)} className="font-sans px-6 py-3" style={{ background: heatingOrStylingChemicals === true ? 'rgba(201,168,76,0.12)' : 'transparent', color: heatingOrStylingChemicals === true ? '#C9A84C' : '#A89880', border: `1px solid ${heatingOrStylingChemicals === true ? '#C9A84C' : 'rgba(168,152,128,0.3)'}`, borderRadius: '2px', cursor: 'pointer' }}>Yes</button>
+              <button onClick={() => setHeatingOrStylingChemicals(false)} className="font-sans px-6 py-3" style={{ background: heatingOrStylingChemicals === false ? 'rgba(201,168,76,0.12)' : 'transparent', color: heatingOrStylingChemicals === false ? '#C9A84C' : '#A89880', border: `1px solid ${heatingOrStylingChemicals === false ? '#C9A84C' : 'rgba(168,152,128,0.3)'}`, borderRadius: '2px', cursor: 'pointer' }}>No</button>
+            </div>
+          </div>
+
+          <div>
+            <p className="font-sans font-medium mb-3" style={{ fontSize: '20px', color: '#F5F0E8' }}>Salon treatments</p>
+            <div className="flex gap-3 flex-wrap">
+              <button onClick={() => setSalonTreatmentsUsed(true)} className="font-sans px-6 py-3" style={{ background: salonTreatmentsUsed === true ? 'rgba(201,168,76,0.12)' : 'transparent', color: salonTreatmentsUsed === true ? '#C9A84C' : '#A89880', border: `1px solid ${salonTreatmentsUsed === true ? '#C9A84C' : 'rgba(168,152,128,0.3)'}`, borderRadius: '2px', cursor: 'pointer' }}>Yes</button>
+              <button onClick={() => setSalonTreatmentsUsed(false)} className="font-sans px-6 py-3" style={{ background: salonTreatmentsUsed === false ? 'rgba(201,168,76,0.12)' : 'transparent', color: salonTreatmentsUsed === false ? '#C9A84C' : '#A89880', border: `1px solid ${salonTreatmentsUsed === false ? '#C9A84C' : 'rgba(168,152,128,0.3)'}`, borderRadius: '2px', cursor: 'pointer' }}>No</button>
+            </div>
+            {salonTreatmentsUsed && (
+              <div className="mt-4 space-y-4">
+                <div className="flex gap-3 flex-wrap">
+                  {salonOptions.map(option => (
+                    <button key={option} onClick={() => toggleSalon(option)} className="font-sans px-4 py-3" style={{ background: salonSelections.includes(option) ? 'rgba(201,168,76,0.12)' : 'transparent', color: salonSelections.includes(option) ? '#C9A84C' : '#A89880', border: `1px solid ${salonSelections.includes(option) ? '#C9A84C' : 'rgba(168,152,128,0.3)'}`, borderRadius: '2px', cursor: 'pointer' }}>{option}</button>
+                  ))}
+                </div>
+                {salonSelections.includes('Other') && (
+                  <input value={salonOther} onChange={e => setSalonOther(e.target.value)} placeholder="Please specify" className="w-full max-w-md px-4 py-3" style={{ background: 'rgba(245,240,232,0.02)', border: '1px solid rgba(168,152,128,0.3)', color: '#F5F0E8', borderRadius: '2px' }} />
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-center mt-10">
+            <button onClick={handleContinue} className="font-sans font-medium px-10 py-5 transition-all duration-300" style={{ fontSize: 'clamp(16px, 2vw, 20px)', background: '#C9A84C', color: '#0A0A0F', border: 'none', borderRadius: '2px', cursor: 'pointer' }}>
               Continue →
             </button>
-          )}
+          </div>
         </div>
       </div>
     </section>

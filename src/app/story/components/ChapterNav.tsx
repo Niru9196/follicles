@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 interface ChapterNavProps {
   currentChapter: number;
@@ -7,13 +7,13 @@ interface ChapterNavProps {
 }
 
 const chapters = [
-  { num: 'I', label: 'THE BEGINNING' },
-  { num: 'II', label: 'THE CYCLE' },
-  { num: 'III', label: 'YOUR PATTERN' },
-  { num: 'IV', label: 'YOUR TIMELINE' },
-  { num: 'V', label: 'INFLUENCES' },
-  { num: 'VI', label: 'TREATMENTS' },
-  { num: 'VII', label: 'YOUR STORY' },
+  { num: 'I', label: 'BEGINNING' },
+  { num: 'II', label: 'PATTERN' },
+  { num: 'III', label: 'TIMELINE' },
+  { num: 'IV', label: 'INFLUENCES' },
+  { num: 'V', label: 'TREATMENTS' },
+  { num: 'VI', label: 'HABITS' },
+  { num: 'VII', label: 'STORY' },
 ];
 
 export default function ChapterNav({ currentChapter }: ChapterNavProps) {
@@ -24,9 +24,10 @@ export default function ChapterNav({ currentChapter }: ChapterNavProps) {
     return () => clearTimeout(timer);
   }, []);
 
+  const progressWidth = Math.min(100, ((Math.max(0, currentChapter + 1) / Math.max(1, chapters.length)) * 100));
+
   return (
     <>
-      {/* Desktop: left side vertical */}
       <nav
         className="fixed left-6 top-1/2 -translate-y-1/2 z-50 hidden lg:flex flex-col gap-4 items-start"
         style={{
@@ -64,12 +65,11 @@ export default function ChapterNav({ currentChapter }: ChapterNavProps) {
         })}
       </nav>
 
-      {/* Mobile: top progress bar */}
       <div className="fixed top-0 left-0 right-0 z-50 lg:hidden h-0.5 bg-transparent">
         <div
           className="h-full transition-all duration-700"
           style={{
-            width: `${((currentChapter + 1) / chapters.length) * 100}%`,
+            width: `${progressWidth}%`,
             background: 'linear-gradient(90deg, #C9A84C, #D4B96A)',
           }}
         />

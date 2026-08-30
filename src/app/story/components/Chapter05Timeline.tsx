@@ -7,8 +7,9 @@ interface Props {
 }
 
 export default function Chapter05Timeline({ onComplete }: Props) {
-  const { setAgeOnset } = useStory();
-  const [age, setAge] = useState<number | null>(null);
+  const { data, setAgeOnset, setDuration } = useStory();
+  const [age, setAge] = useState<number | null>(data.ageOnset ?? null);
+  const [duration, setDurationValue] = useState(data.duration ?? null);
   const [confirmed, setConfirmed] = useState(false);
   const [visible, setVisible] = useState(false);
   const [listening, setListening] = useState(false);
@@ -61,8 +62,13 @@ export default function Chapter05Timeline({ onComplete }: Props) {
     if (age !== null) {
       setAgeOnset(age);
       setConfirmed(true);
-      setTimeout(() => onComplete(), 1500);
     }
+  };
+
+  const handleDurationSelect = (value: 'under6months' | '6to12months' | 'over1year') => {
+    setDurationValue(value);
+    setDuration(value);
+    setTimeout(() => onComplete(), 400);
   };
 
   const handleVoice = () => {
@@ -94,6 +100,11 @@ export default function Chapter05Timeline({ onComplete }: Props) {
   };
 
   const ratio = age !== null ? (age - 10) / 60 : null;
+  const durationOptions = [
+    { label: 'Under 6 months', value: 'under6months' as const },
+    { label: '6–12 months', value: '6to12months' as const },
+    { label: 'Over a year', value: 'over1year' as const },
+  ];
 
   const markers = [10, 20, 30, 40, 50, 60, 70];
 
@@ -272,10 +283,28 @@ export default function Chapter05Timeline({ onComplete }: Props) {
         )}
 
         {confirmed && (
-          <div className="flex justify-center mt-10">
-            <p className="font-sans font-medium" style={{ fontSize: '24px', color: '#C9A84C' }}>
-              Around {age} — got it. ✓
+          <div className="mt-10 space-y-6">
+            <p className="font-sans font-medium text-center" style={{ fontSize: '20px', color: '#F5F0E8' }}>
+              How long has this been happening?
             </p>
+            <div className="flex flex-wrap justify-center gap-3">
+              {durationOptions.map(option => (
+                <button
+                  key={option.value}
+                  onClick={() => handleDurationSelect(option.value)}
+                  className="font-sans px-6 py-3 transition-all duration-300"
+                  style={{
+                    background: duration === option.value ? 'rgba(201,168,76,0.12)' : 'transparent',
+                    color: duration === option.value ? '#C9A84C' : '#A89880',
+                    border: `1px solid ${duration === option.value ? '#C9A84C' : 'rgba(168,152,128,0.3)'}`,
+                    borderRadius: '2px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
           </div>
         )}
       </div>

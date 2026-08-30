@@ -7,9 +7,9 @@ interface Props {
 }
 
 export default function Chapter15Consent({ onComplete }: Props) {
-  const { setSamplePreference, setConsent } = useStory();
-  const [sampleChoice, setSampleChoice] = useState<'saliva' | 'blood' | 'either' | null>(null);
-  const [consentGiven, setConsentGiven] = useState<boolean | null>(null);
+  const { data, setSamplePreference, setConsent } = useStory();
+  const [sampleChoice, setSampleChoice] = useState<'saliva' | 'blood' | 'either' | null>(data.sampleType ?? 'saliva');
+  const [consentGiven, setConsentGiven] = useState<boolean | null>(data.consentGeneticAnalysis ?? true);
   const [visible, setVisible] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -121,7 +121,7 @@ export default function Chapter15Consent({ onComplete }: Props) {
               }}
             >
               <p className="font-sans font-medium mb-2" style={{ fontSize: 'clamp(16px, 2vw, 20px)', color: '#F5F0E8' }}>
-                Are you comfortable consenting to sample collection and genetic analysis?
+                Do you consent to sample collection and genetic analysis?
               </p>
               <p className="font-sans" style={{ fontSize: '14px', color: '#A89880' }}>
                 Your data will be handled in accordance with applicable privacy regulations.
