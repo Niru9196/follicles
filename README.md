@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Follicle
 
-## Getting Started
+A story-led hair and scalp intake experience built with Next.js and TypeScript.
 
-First, run the development server:
+This app is designed to feel like the patient is telling their hair story rather than filling out a traditional medical questionnaire. The intake follows the PDF as the source of truth and produces a complete structured summary at the end.
+
+## What this app does
+
+- Guides the patient through a narrative, editorial flow
+- Preserves a conversational experience without turning the journey into a rigid form
+- Keeps a canonical intake state in one place
+- Distinguishes unanswered vs explicit answers, especially important for multi-select and negative cases like “None of these”
+- Validates the final intake before completion
+- Renders both the narrative story and the structured complete hair & scalp intake summary
+
+## Core product principles
+
+- Story-first UX over form-first UX
+- No fake defaults or hidden assumptions
+- Explicit representation for “none” and other edge states
+- Canonical state as the single source of truth
+- Final structured output must reflect the patient’s actual selections
+
+## Key implementation areas
+
+- Story flow and chapter sequencing: `src/app/story/page.tsx`
+- Canonical intake state and validation: `src/app/story/context/StoryContext.tsx`
+- Story chapters: `src/app/story/components/`
+- Final payoff screen: `src/app/story/components/Chapter16Payoff.tsx`
+
+## Local development
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Run the app:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000 in the browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Validation and checks
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Type-check the app:
 
-## Learn More
+```bash
+npm run type-check
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Notes on data model
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+The app treats these states distinctly:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `null` = unanswered
+- `false` = explicitly answered “No”
+- `true` = explicitly answered “Yes”
+- `['none']` = explicitly answered “None of these”
+- `[]` = not considered a valid completed answer for this question
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This distinction is important so the final intake does not misread an explicit answer as missing data.
