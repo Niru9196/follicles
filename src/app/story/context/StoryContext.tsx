@@ -75,7 +75,6 @@ export interface StoryContextType {
   setPregnancyHairLoss: (value: PregnancyStatusOption | null) => void;
   setAcneOilySkinAdulthood: (value: boolean | null) => void;
   setExcessBodyFacialHairGrowth: (value: boolean | null) => void;
-  setPast6Months: (value: Past6MonthsTrigger[]) => void;
   setTreatments: (t: Record<ProductName, ProductUsage>) => void;
   setHabits: (h: StoryData['habits']) => void;
   setProcedures: (p: Record<ProcedureName, ProcedureUsage>) => void;
@@ -557,7 +556,6 @@ export function StoryProvider({ children }: { children: ReactNode }) {
   const setPregnancyHairLoss = (value: PregnancyStatusOption | null) => setData(d => ({ ...d, pregnancyHairLoss: value }));
   const setAcneOilySkinAdulthood = (value: boolean | null) => setData(d => ({ ...d, acneOilySkinAdulthood: value }));
   const setExcessBodyFacialHairGrowth = (value: boolean | null) => setData(d => ({ ...d, excessBodyFacialHairGrowth: value }));
-  const setPast6Months = (value: Past6MonthsTrigger[]) => setData(d => ({ ...d, past6Months: value }));
   const setTreatments = (t: Record<ProductName, ProductUsage>) => setData(d => ({ ...d, products: t }));
   const setHabits = (h: StoryData['habits']) => setData(d => ({ ...d, habits: h }));
   const setProcedures = (p: Record<ProcedureName, ProcedureUsage>) => setData(d => ({ ...d, procedures: p }));
@@ -581,7 +579,6 @@ export function StoryProvider({ children }: { children: ReactNode }) {
         setPregnancyHairLoss,
         setAcneOilySkinAdulthood,
         setExcessBodyFacialHairGrowth,
-        setPast6Months,
         setTreatments,
         setHabits,
         setProcedures,
