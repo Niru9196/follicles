@@ -17,8 +17,8 @@ export default function Chapter10HealthConditions({ onComplete }: Props) {
   const { data, setHealthConditions, setAcneOilySkinAdulthood, setExcessBodyFacialHairGrowth } = useStory();
   const [selected, setSelected] = useState<DiagnosedCondition[]>([]);
   const [noneSelected, setNoneSelected] = useState(false);
-  const [acneAnswer, setAcneAnswer] = useState<boolean | null>(data.acneOilySkinAdulthood ?? false);
-  const [hairGrowthAnswer, setHairGrowthAnswer] = useState<boolean | null>(data.excessBodyFacialHairGrowth ?? false);
+  const [acneAnswer, setAcneAnswer] = useState<boolean | null>(data.acneOilySkinAdulthood ?? null);
+  const [hairGrowthAnswer, setHairGrowthAnswer] = useState<boolean | null>(data.excessBodyFacialHairGrowth ?? null);
   const [visible, setVisible] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -47,11 +47,15 @@ export default function Chapter10HealthConditions({ onComplete }: Props) {
     setSelected(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   };
 
+  const hasDiagnosisSelection = selected.length > 0 || noneSelected;
+  const hasBodyStoryAnswers = acneAnswer !== null && hairGrowthAnswer !== null;
+  const canContinue = hasDiagnosisSelection && hasBodyStoryAnswers;
+
   const handleContinue = () => {
     const next: DiagnosedCondition[] = noneSelected ? ['none'] : selected;
     setHealthConditions(next);
-    setAcneOilySkinAdulthood(acneAnswer ?? false);
-    setExcessBodyFacialHairGrowth(hairGrowthAnswer ?? false);
+    setAcneOilySkinAdulthood(acneAnswer ?? null);
+    setExcessBodyFacialHairGrowth(hairGrowthAnswer ?? null);
     onComplete();
   };
 
@@ -102,11 +106,13 @@ export default function Chapter10HealthConditions({ onComplete }: Props) {
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-4 items-center justify-center mt-8" style={{ opacity: visible ? 1 : 0, transition: 'opacity 1s ease 0.5s' }}>
-          <button onClick={handleContinue} className="font-sans font-medium px-10 py-5 transition-all duration-300" style={{ fontSize: 'clamp(16px, 2vw, 20px)', background: '#C9A84C', color: '#0A0A0F', border: 'none', borderRadius: '2px', cursor: 'pointer' }} onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = '#D4B96A'; }} onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = '#C9A84C'; }}>
-            Continue →
-          </button>
-        </div>
+        {canContinue && (
+          <div className="flex flex-col sm:flex-row gap-4 items-center justify-center mt-8" style={{ opacity: visible ? 1 : 0, transition: 'opacity 1s ease 0.5s' }}>
+            <button onClick={handleContinue} className="font-sans font-medium px-10 py-5 transition-all duration-300" style={{ fontSize: 'clamp(16px, 2vw, 20px)', background: '#C9A84C', color: '#0A0A0F', border: 'none', borderRadius: '2px', cursor: 'pointer' }} onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = '#D4B96A'; }} onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = '#C9A84C'; }}>
+              Continue →
+            </button>
+          </div>
+        )}
       </div>
     </section>
   );

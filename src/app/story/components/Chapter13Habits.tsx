@@ -20,13 +20,13 @@ const salonOptions = ['Keratin', 'Rebonding', 'Smoothening', 'Other'];
 
 export default function Chapter13Habits({ onComplete }: Props) {
   const { setHabits } = useStory();
-  const [smokingUsed, setSmokingUsed] = useState(false);
-  const [smokingQuantity, setSmokingQuantity] = useState<SmokingQuantity | undefined>('under5');
-  const [alcohol, setAlcohol] = useState<boolean | null>(false);
-  const [hardWater, setHardWater] = useState<boolean | null>(false);
-  const [hairWashFrequency, setHairWashFrequency] = useState<HairWashFrequency | null>('alternateDays');
-  const [heatingOrStylingChemicals, setHeatingOrStylingChemicals] = useState<boolean | null>(false);
-  const [salonTreatmentsUsed, setSalonTreatmentsUsed] = useState<boolean | null>(false);
+  const [smokingUsed, setSmokingUsed] = useState<boolean | null>(null);
+  const [smokingQuantity, setSmokingQuantity] = useState<SmokingQuantity | null>(null);
+  const [alcohol, setAlcohol] = useState<boolean | null>(null);
+  const [hardWater, setHardWater] = useState<boolean | null>(null);
+  const [hairWashFrequency, setHairWashFrequency] = useState<HairWashFrequency | null>(null);
+  const [heatingOrStylingChemicals, setHeatingOrStylingChemicals] = useState<boolean | null>(null);
+  const [salonTreatmentsUsed, setSalonTreatmentsUsed] = useState<boolean | null>(null);
   const [salonSelections, setSalonSelections] = useState<string[]>([]);
   const [salonOther, setSalonOther] = useState('');
   const [visible, setVisible] = useState(false);
@@ -42,14 +42,32 @@ export default function Chapter13Habits({ onComplete }: Props) {
     setSalonSelections(prev => prev.includes(value) ? prev.filter(item => item !== value) : [...prev, value]);
   };
 
+  const canContinue =
+    smokingUsed !== null &&
+    (smokingUsed === false || smokingQuantity !== null) &&
+    alcohol !== null &&
+    hardWater !== null &&
+    hairWashFrequency !== null &&
+    heatingOrStylingChemicals !== null &&
+    salonTreatmentsUsed !== null &&
+    (salonTreatmentsUsed === false || salonSelections.length > 0) &&
+    (salonTreatmentsUsed === false || !salonSelections.includes('Other') || salonOther.trim().length > 0);
+
   const handleContinue = () => {
     setHabits({
-      smoking: { used: smokingUsed, quantity: smokingUsed ? smokingQuantity : undefined },
-      alcohol: alcohol ?? false,
-      hardWater: hardWater ?? false,
+      smoking: {
+        used: smokingUsed,
+        quantity: smokingUsed === true ? smokingQuantity ?? null : null,
+      },
+      alcohol: alcohol,
+      hardWater: hardWater,
       hairWashFrequency,
-      heatingOrStylingChemicals: heatingOrStylingChemicals ?? false,
-      salonTreatments: { used: salonTreatmentsUsed ?? false, treatments: salonTreatmentsUsed ? salonSelections : [], other: salonTreatmentsUsed && salonSelections.includes('Other') ? salonOther : undefined },
+      heatingOrStylingChemicals: heatingOrStylingChemicals,
+      salonTreatments: {
+        used: salonTreatmentsUsed,
+        treatments: salonTreatmentsUsed === true ? salonSelections : [],
+        other: salonTreatmentsUsed === true && salonSelections.includes('Other') ? salonOther : undefined,
+      },
     });
     onComplete();
   };
@@ -69,8 +87,8 @@ export default function Chapter13Habits({ onComplete }: Props) {
           <div>
             <p className="font-sans font-medium mb-3" style={{ fontSize: '20px', color: '#F5F0E8' }}>Smoking</p>
             <div className="flex gap-3 flex-wrap">
-              <button onClick={() => { setSmokingUsed(true); if (!smokingQuantity) setSmokingQuantity('under5'); }} className="font-sans px-6 py-3" style={{ background: smokingUsed ? 'rgba(201,168,76,0.12)' : 'transparent', color: smokingUsed ? '#C9A84C' : '#A89880', border: `1px solid ${smokingUsed ? '#C9A84C' : 'rgba(168,152,128,0.3)'}`, borderRadius: '2px', cursor: 'pointer' }}>Yes</button>
-              <button onClick={() => { setSmokingUsed(false); setSmokingQuantity(undefined); }} className="font-sans px-6 py-3" style={{ background: !smokingUsed && smokingUsed !== null ? 'rgba(201,168,76,0.12)' : 'transparent', color: !smokingUsed ? '#C9A84C' : '#A89880', border: `1px solid ${!smokingUsed ? '#C9A84C' : 'rgba(168,152,128,0.3)'}`, borderRadius: '2px', cursor: 'pointer' }}>No</button>
+              <button onClick={() => { setSmokingUsed(true); if (!smokingQuantity) setSmokingQuantity('under5'); }} className="font-sans px-6 py-3" style={{ background: smokingUsed === true ? 'rgba(201,168,76,0.12)' : 'transparent', color: smokingUsed === true ? '#C9A84C' : '#A89880', border: `1px solid ${smokingUsed === true ? '#C9A84C' : 'rgba(168,152,128,0.3)'}`, borderRadius: '2px', cursor: 'pointer' }}>Yes</button>
+              <button onClick={() => { setSmokingUsed(false); setSmokingQuantity(null); }} className="font-sans px-6 py-3" style={{ background: smokingUsed === false ? 'rgba(201,168,76,0.12)' : 'transparent', color: smokingUsed === false ? '#C9A84C' : '#A89880', border: `1px solid ${smokingUsed === false ? '#C9A84C' : 'rgba(168,152,128,0.3)'}`, borderRadius: '2px', cursor: 'pointer' }}>No</button>
             </div>
             {smokingUsed && (
               <div className="mt-4 flex gap-3 flex-wrap">
@@ -134,11 +152,13 @@ export default function Chapter13Habits({ onComplete }: Props) {
             )}
           </div>
 
-          <div className="flex justify-center mt-10">
-            <button onClick={handleContinue} className="font-sans font-medium px-10 py-5 transition-all duration-300" style={{ fontSize: 'clamp(16px, 2vw, 20px)', background: '#C9A84C', color: '#0A0A0F', border: 'none', borderRadius: '2px', cursor: 'pointer' }}>
-              Continue →
-            </button>
-          </div>
+          {canContinue && (
+            <div className="flex justify-center mt-10">
+              <button onClick={handleContinue} className="font-sans font-medium px-10 py-5 transition-all duration-300" style={{ fontSize: 'clamp(16px, 2vw, 20px)', background: '#C9A84C', color: '#0A0A0F', border: 'none', borderRadius: '2px', cursor: 'pointer' }}>
+                Continue →
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </section>

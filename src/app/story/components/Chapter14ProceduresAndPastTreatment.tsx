@@ -14,14 +14,14 @@ const procedureRows: Array<{ key: ProcedureName; label: string }> = [
 
 export default function Chapter14ProceduresAndPastTreatment({ onComplete }: Props) {
   const { data, setProcedures, setSideEffectsPastTreatment } = useStory();
-  const [procedureState, setProcedureState] = useState<Record<ProcedureName, { done: boolean; sessions?: '1to3' | '4to6' | 'over6'; helped?: boolean; other?: string }>>({
-    prp: data.procedures.prp ?? { done: false },
-    gfcOrIprf: data.procedures.gfcOrIprf ?? { done: false },
-    stemCellsOrExosomes: data.procedures.stemCellsOrExosomes ?? { done: false },
-    hairTransplant: data.procedures.hairTransplant ?? { done: false },
-    other: data.procedures.other ?? { done: false },
+  const [procedureState, setProcedureState] = useState<Record<ProcedureName, { done: boolean | null; sessions?: '1to3' | '4to6' | 'over6'; helped?: boolean | null; other?: string }>>({
+    prp: data.procedures.prp ?? { done: null },
+    gfcOrIprf: data.procedures.gfcOrIprf ?? { done: null },
+    stemCellsOrExosomes: data.procedures.stemCellsOrExosomes ?? { done: null },
+    hairTransplant: data.procedures.hairTransplant ?? { done: null },
+    other: data.procedures.other ?? { done: null },
   });
-  const [pastTreatmentYesNo, setPastTreatmentYesNo] = useState<boolean | null>(data.sideEffectsPastTreatment.yesNo ?? false);
+  const [pastTreatmentYesNo, setPastTreatmentYesNo] = useState<boolean | null>(data.sideEffectsPastTreatment.yesNo ?? null);
   const [description, setDescription] = useState(data.sideEffectsPastTreatment.description ?? '');
   const [visible, setVisible] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -32,12 +32,29 @@ export default function Chapter14ProceduresAndPastTreatment({ onComplete }: Prop
     return () => observer.disconnect();
   }, []);
 
-  const updateProcedure = (key: ProcedureName, patch: Partial<{ done: boolean; sessions?: '1to3' | '4to6' | 'over6'; helped?: boolean; other?: string }>) => {
+  const updateProcedure = (key: ProcedureName, patch: Partial<{ done: boolean | null; sessions?: '1to3' | '4to6' | 'over6'; helped?: boolean | null; other?: string }>) => {
     setProcedureState(prev => ({
       ...prev,
       [key]: { ...prev[key], ...patch },
     }));
   };
+
+  const rowKeyForProcedure = (item: { done: boolean | null; sessions?: '1to3' | '4to6' | 'over6'; helped?: boolean | null; other?: string }) => {
+    return procedureRows.find(row => procedureState[row.key] === item)?.key;
+  };
+
+  const hasAnyProcedureAnswered = Object.values(procedureState).some(item => item.done !== null);
+  const hasProcedureFollowUpsComplete = Object.values(procedureState).every(item => {
+    if (item.done === null) return true;
+    if (item.done === false) return true;
+    if (!item.sessions) return false;
+    if (item.helped === null || item.helped === undefined) return false;
+    const rowKey = rowKeyForProcedure(item);
+    if (rowKey === 'other') return !!item.other?.trim();
+    return true;
+  });
+  const canContinue = hasAnyProcedureAnswered && hasProcedureFollowUpsComplete && pastTreatmentYesNo !== null &&
+    (pastTreatmentYesNo === false || description.trim().length > 0);
 
   const handleContinue = () => {
     setProcedures(procedureState);
@@ -128,11 +145,13 @@ export default function Chapter14ProceduresAndPastTreatment({ onComplete }: Prop
             )}
           </div>
 
-          <div className="flex justify-center mt-10">
-            <button onClick={handleContinue} className="font-sans font-medium px-10 py-5 transition-all duration-300" style={{ fontSize: 'clamp(16px, 2vw, 20px)', background: '#C9A84C', color: '#0A0A0F', border: 'none', borderRadius: '2px', cursor: 'pointer' }}>
-              Continue →
-            </button>
-          </div>
+          {canContinue && (
+            <div className="flex justify-center mt-10">
+              <button onClick={handleContinue} className="font-sans font-medium px-10 py-5 transition-all duration-300" style={{ fontSize: 'clamp(16px, 2vw, 20px)', background: '#C9A84C', color: '#0A0A0F', border: 'none', borderRadius: '2px', cursor: 'pointer' }}>
+                Continue →
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </section>

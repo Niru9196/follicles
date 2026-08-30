@@ -1,6 +1,6 @@
 'use client';
 import React, { useEffect, useRef, useState } from 'react';
-import { useStory } from '../context/StoryContext';
+import { PatternOption, useStory } from '../context/StoryContext';
 
 interface Props {
   onComplete: () => void;
@@ -8,7 +8,7 @@ interface Props {
 
 const patterns = [
   {
-    id: 'hairline',
+    id: 'recedingHairline' as const,
     label: 'A changing hairline',
     desc: 'The front hairline gradually moves back',
     svg: (active: boolean) => (
@@ -20,7 +20,7 @@ const patterns = [
     ),
   },
   {
-    id: 'crown',
+    id: 'thinningAtCrown' as const,
     label: 'Thinning at the crown',
     desc: 'Hair thins at the top of the head',
     svg: (active: boolean) => (
@@ -31,7 +31,7 @@ const patterns = [
     ),
   },
   {
-    id: 'part',
+    id: 'wideningPartLine' as const,
     label: 'A widening part',
     desc: 'The centre parting becomes more visible',
     svg: (active: boolean) => (
@@ -44,7 +44,7 @@ const patterns = [
     ),
   },
   {
-    id: 'diffuse',
+    id: 'diffuseThinning' as const,
     label: 'Overall thinning',
     desc: 'Hair density reduces across the whole scalp',
     svg: (active: boolean) => (
@@ -57,7 +57,7 @@ const patterns = [
     ),
   },
   {
-    id: 'patchy',
+    id: 'patchyLoss' as const,
     label: 'Patchy loss',
     desc: 'A small area loses hair suddenly',
     svg: (active: boolean) => (
@@ -68,7 +68,7 @@ const patterns = [
     ),
   },
   {
-    id: 'shedding',
+    id: 'suddenExcessiveShedding' as const,
     label: 'Increased shedding',
     desc: 'More hair than usual coming out',
     svg: (active: boolean) => (
@@ -87,7 +87,7 @@ const patterns = [
 
 export default function Chapter04Patterns({ onComplete }: Props) {
   const { setPatterns } = useStory();
-  const [selected, setSelected] = useState<string[]>([]);
+  const [selected, setSelected] = useState<PatternOption[]>([]);
   const [visible, setVisible] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -100,7 +100,7 @@ export default function Chapter04Patterns({ onComplete }: Props) {
     return () => observer.disconnect();
   }, []);
 
-  const toggle = (id: string) => {
+  const toggle = (id: PatternOption) => {
     setSelected(prev =>
       prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
     );

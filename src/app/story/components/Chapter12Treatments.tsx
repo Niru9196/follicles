@@ -21,11 +21,11 @@ const durationOptions = [
 export default function Chapter12Treatments({ onComplete }: Props) {
   const { setTreatments } = useStory();
   const [answers, setAnswers] = useState<Record<ProductName, ProductUsage>>({
-    medicatedShampoos: { used: false },
-    hairOilsOrSerums: { used: false },
-    topicalMinoxidil: { used: false },
-    oralMinoxidil: { used: false },
-    supplements: { used: false },
+    medicatedShampoos: { used: null },
+    hairOilsOrSerums: { used: null },
+    topicalMinoxidil: { used: null },
+    oralMinoxidil: { used: null },
+    supplements: { used: null },
   });
   const [current, setCurrent] = useState<ProductName>('medicatedShampoos');
   const [visible, setVisible] = useState(false);
@@ -45,15 +45,29 @@ export default function Chapter12Treatments({ onComplete }: Props) {
     setAnswers(next);
   };
 
-  const goNext = () => {
-    const index = productOptions.findIndex(p => p.key === current);
-    if (index < productOptions.length - 1) {
-      setCurrent(productOptions[index + 1].key);
-      return;
-    }
-    setTreatments(answers);
-    onComplete();
-  };
+  const isCurrentProductComplete =
+    currentEntry.used === false ||
+    (currentEntry.used === true &&
+      currentEntry.duration !== undefined &&
+      currentEntry.helped !== undefined &&
+      currentEntry.sideEffects !== undefined);
+
+  useEffect(() => {
+    if (!isCurrentProductComplete) return;
+    if (currentEntry.used !== true && currentEntry.used !== false) return;
+
+    const timer = setTimeout(() => {
+      const index = productOptions.findIndex(p => p.key === current);
+      if (index < productOptions.length - 1) {
+        setCurrent(productOptions[index + 1].key);
+        return;
+      }
+      setTreatments(answers);
+      onComplete();
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [isCurrentProductComplete, currentEntry.used, current, answers, onComplete, setTreatments]);
 
   return (
     <section ref={ref} className="min-h-screen flex flex-col items-center justify-center px-6 py-24" style={{ background: '#0D0D14' }}>
@@ -119,11 +133,6 @@ export default function Chapter12Treatments({ onComplete }: Props) {
             )}
           </div>
 
-          <div className="flex justify-between mt-8">
-            <button onClick={goNext} className="font-sans font-medium px-10 py-5 transition-all duration-300" style={{ fontSize: 'clamp(16px, 2vw, 20px)', background: '#C9A84C', color: '#0A0A0F', border: 'none', borderRadius: '2px', cursor: 'pointer' }}>
-              {current === productOptions[productOptions.length - 1].key ? 'Continue →' : 'Next product →'}
-            </button>
-          </div>
         </div>
       </div>
     </section>

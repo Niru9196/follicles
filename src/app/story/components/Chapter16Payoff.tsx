@@ -1,6 +1,6 @@
 'use client';
 import React, { useEffect, useRef, useState } from 'react';
-import { useStory } from '../context/StoryContext';
+import { buildCompletedIntake, useStory } from '../context/StoryContext';
 
 interface Props {
   onRestart: () => void;
@@ -13,12 +13,12 @@ export default function Chapter16Payoff({ onRestart }: Props) {
   const ref = useRef<HTMLDivElement>(null);
 
   const patternLabels: Record<string, string> = {
-    hairline: 'a changing hairline',
-    crown: 'thinning at the crown',
-    part: 'a widening part',
-    diffuse: 'overall thinning',
-    patchy: 'patchy loss',
-    shedding: 'increased shedding',
+    recedingHairline: 'a changing hairline',
+    thinningAtCrown: 'thinning at the crown',
+    wideningPartLine: 'a widening part',
+    diffuseThinning: 'overall thinning',
+    patchyLoss: 'patchy loss',
+    suddenExcessiveShedding: 'increased shedding',
   };
 
   const triggerLabels: Record<string, string> = {
@@ -27,7 +27,6 @@ export default function Chapter16Payoff({ onRestart }: Props) {
     illness: 'illness or fever',
     surgery: 'surgery',
     environment: 'an environmental change',
-    medication: 'a medication change',
   };
 
   const familyLabels: Record<string, string> = {
@@ -97,10 +96,10 @@ export default function Chapter16Payoff({ onRestart }: Props) {
       show: !!data.gender,
     },
     {
-      text: data.ageOnset ? (
-        <>You first noticed changes around <span style={{ color: '#C9A84C', fontWeight: 600 }}>{data.ageOnset}</span>.</>
+      text: data.ageHairLossBegan !== null ? (
+        <>You first noticed changes around <span style={{ color: '#C9A84C', fontWeight: 600 }}>{data.ageHairLossBegan}</span>.</>
       ) : null,
-      show: !!data.ageOnset,
+      show: data.ageHairLossBegan !== null,
     },
     {
       text: data.duration ? (
@@ -109,10 +108,10 @@ export default function Chapter16Payoff({ onRestart }: Props) {
       show: !!data.duration,
     },
     {
-      text: data.patterns.length > 0 ? (
-        <>You mainly noticed <span style={{ color: '#C9A84C', fontWeight: 600 }}>{data.patterns.map(p => patternLabels[p] || p).join(', ')}</span>.</>
+      text: data.pattern.length > 0 ? (
+        <>You mainly noticed <span style={{ color: '#C9A84C', fontWeight: 600 }}>{data.pattern.map((p: string) => patternLabels[p] || p).join(', ')}</span>.</>
       ) : null,
-      show: data.patterns.length > 0,
+      show: data.pattern.length > 0,
     },
     {
       text: data.onsetType ? (
@@ -121,20 +120,20 @@ export default function Chapter16Payoff({ onRestart }: Props) {
       show: !!data.onsetType,
     },
     {
-      text: data.triggers.length > 0 ? (
-        <>You remember <span style={{ color: '#C9A84C', fontWeight: 600 }}>{data.triggers.map(t => triggerLabels[t] || t).join(' and ')}</span> around that time.</>
+      text: data.past6Months.length > 0 ? (
+        <>You remember <span style={{ color: '#C9A84C', fontWeight: 600 }}>{data.past6Months.map((t: string) => triggerLabels[t] || t).join(' and ')}</span> around that time.</>
       ) : null,
-      show: data.triggers.length > 0,
+      show: data.past6Months.length > 0,
     },
     {
       text: data.familyHistory.length > 0 ? (
-        <>Hair thinning is present in your <span style={{ color: '#C9A84C', fontWeight: 600 }}>{data.familyHistory.map(f => familyLabels[f] || f).join(' and ')}</span>.</>
+        <>Hair thinning is present in your <span style={{ color: '#C9A84C', fontWeight: 600 }}>{data.familyHistory.map((f: string) => familyLabels[f] || f).join(' and ')}</span>.</>
       ) : null,
       show: data.familyHistory.length > 0,
     },
     {
       text: data.diagnosedConditions.length > 0 ? (
-        <>You mentioned <span style={{ color: '#C9A84C', fontWeight: 600 }}>{data.diagnosedConditions.map(item => diagnosisLabels[item] || item).join(', ')}</span> as potentially relevant.</>
+        <>You mentioned <span style={{ color: '#C9A84C', fontWeight: 600 }}>{data.diagnosedConditions.map((item: string) => diagnosisLabels[item] || item).join(', ')}</span> as potentially relevant.</>
       ) : null,
       show: data.diagnosedConditions.length > 0,
     },
@@ -193,6 +192,27 @@ export default function Chapter16Payoff({ onRestart }: Props) {
       show: data.consentGeneticAnalysis !== null,
     },
   ].filter(l => l.show);
+
+  const intake = buildCompletedIntake(data);
+  const intakeSections = [
+    { title: 'A · PERSONAL AND FAMILY HAIR LOSS HISTORY', entries: intake.questions.slice(0, 4) },
+    { title: 'B · HORMONAL AND HEALTH INFLUENCES', entries: intake.questions.slice(4, 9) },
+    { title: 'C · LIFESTYLE AND ENVIRONMENTAL TRIGGERS', entries: intake.questions.slice(9, 11) },
+    { title: 'D · CURRENT HAIR CARE AND TREATMENTS', entries: intake.questions.slice(11, 14) },
+    { title: 'E · SAMPLE AND CONSENT', entries: intake.questions.slice(14, 16) },
+  ];
+
+  const formatAnswer = (value: unknown): string => {
+    if (Array.isArray(value)) return value.join(' · ');
+    if (typeof value === 'string') return value;
+    if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+    if (value && typeof value === 'object') {
+      return Object.entries(value as Record<string, unknown>)
+        .map(([key, item]) => `${key}: ${typeof item === 'object' ? formatAnswer(item) : String(item)}`)
+        .join(' • ');
+    }
+    return String(value ?? 'Not answered');
+  };
 
   const lineStyle = (i: number): React.CSSProperties => ({
     opacity: step > i ? 1 : 0,
@@ -278,6 +298,33 @@ export default function Chapter16Payoff({ onRestart }: Props) {
               Your story has been noted. Your clinician will guide you through the details.
             </p>
           )}
+        </div>
+
+        <div className="mt-20 mb-16" style={{ opacity: visible ? 1 : 0, transition: 'opacity 1s ease 0.8s' }}>
+          <div className="mb-8">
+            <p className="font-sans text-sm tracking-widest mb-4" style={{ color: '#C9A84C' }}>COMPLETE HAIR & SCALP INTAKE</p>
+            <h2 className="font-serif font-light" style={{ color: '#F5F0E8', fontSize: 'clamp(28px, 4vw, 44px)', lineHeight: 1.1 }}>Your structured intake</h2>
+          </div>
+
+          <div className="space-y-8">
+            {intakeSections.map(section => (
+              <div key={section.title} className="rounded border p-5 md:p-6" style={{ background: 'rgba(245,240,232,0.02)', borderColor: 'rgba(201,168,76,0.18)' }}>
+                <h3 className="font-sans font-medium mb-4" style={{ color: '#C9A84C', fontSize: '16px', letterSpacing: '0.08em' }}>{section.title}</h3>
+                <div className="space-y-4">
+                  {section.entries.map(item => (
+                    <div key={item.number} className="border-l border-solid pl-4" style={{ borderColor: 'rgba(201,168,76,0.2)' }}>
+                      <p className="font-sans font-medium" style={{ color: '#F5F0E8', fontSize: '15px' }}>
+                        {item.number} · {item.question}
+                      </p>
+                      <p className="font-sans mt-1" style={{ color: '#A89880', lineHeight: 1.6, fontSize: '15px' }}>
+                        {formatAnswer(item.answer)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Conclusion */}

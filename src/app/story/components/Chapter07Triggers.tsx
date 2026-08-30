@@ -1,26 +1,25 @@
 'use client';
 import React, { useEffect, useRef, useState } from 'react';
-import { useStory } from '../context/StoryContext';
+import { Past6MonthsTrigger, useStory } from '../context/StoryContext';
 
 interface Props {
   onComplete: () => void;
 }
 
 const triggerItems = [
-  { id: 'stress', emoji: '😮‍💨', label: 'Stress' },
-  { id: 'weight', emoji: '⚖️', label: 'Weight change' },
-  { id: 'illness', emoji: '🤒', label: 'Illness or fever' },
-  { id: 'surgery', emoji: '🏥', label: 'Surgery' },
-  { id: 'environment', emoji: '🏠', label: 'New environment or water' },
-  { id: 'medication', emoji: '💊', label: 'Medication change' },
-  { id: 'none', emoji: '✓', label: 'None of these' },
+  { id: 'highStressOrEmotionalTrauma' as const, emoji: '😮‍💨', label: 'Stress' },
+  { id: 'crashDietingOrMajorWeightLoss' as const, emoji: '⚖️', label: 'Weight change' },
+  { id: 'feverWithIllness' as const, emoji: '🤒', label: 'Illness or fever' },
+  { id: 'recentSurgery' as const, emoji: '🏥', label: 'Surgery' },
+  { id: 'changeInLocationWaterOrAirQuality' as const, emoji: '🏠', label: 'New environment or water' },
+  { id: 'none' as const, emoji: '✓', label: 'None of these' },
 ];
 
 const lifeEvents = ['Stress', 'Illness', 'Weight change', 'Surgery', 'Environment', 'Medication', 'Lifestyle'];
 
 export default function Chapter07Triggers({ onComplete }: Props) {
   const { setTriggers } = useStory();
-  const [selected, setSelected] = useState<string[]>([]);
+  const [selected, setSelected] = useState<Array<Past6MonthsTrigger | 'none'>>([]);
   const [visible, setVisible] = useState(false);
   const [timelineStep, setTimelineStep] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
@@ -42,7 +41,7 @@ export default function Chapter07Triggers({ onComplete }: Props) {
     return () => clearInterval(interval);
   }, [visible]);
 
-  const toggle = (id: string) => {
+  const toggle = (id: Past6MonthsTrigger | 'none') => {
     if (id === 'none') {
       setSelected(['none']);
       return;
@@ -54,7 +53,8 @@ export default function Chapter07Triggers({ onComplete }: Props) {
   };
 
   const handleContinue = () => {
-    setTriggers(selected.filter(x => x !== 'none'));
+    const next = selected.filter((x): x is Past6MonthsTrigger => x !== 'none');
+    setTriggers(next);
     onComplete();
   };
 

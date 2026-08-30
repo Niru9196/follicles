@@ -19,16 +19,16 @@ export type Past6MonthsTrigger =
   | 'changeInLocationWaterOrAirQuality';
 
 export interface ProductUsage {
-  used: boolean;
+  used: boolean | null;
   duration?: 'under3months' | '3to6months' | 'over6months';
-  helped?: boolean;
-  sideEffects?: boolean;
+  helped?: boolean | null;
+  sideEffects?: boolean | null;
 }
 
 export interface ProcedureUsage {
-  done: boolean;
+  done: boolean | null;
   sessions?: '1to3' | '4to6' | 'over6';
-  helped?: boolean;
+  helped?: boolean | null;
   other?: string;
 }
 
@@ -45,28 +45,19 @@ export interface StoryData {
   excessBodyFacialHairGrowth: boolean | null;
   past6Months: Past6MonthsTrigger[];
   habits: {
-    smoking: { used: boolean; quantity?: SmokingQuantity };
-    alcohol: boolean;
-    hardWater: boolean;
+    smoking: { used: boolean | null; quantity?: SmokingQuantity | null };
+    alcohol: boolean | null;
+    hardWater: boolean | null;
     hairWashFrequency: HairWashFrequency | null;
-    heatingOrStylingChemicals: boolean;
-    salonTreatments: { used: boolean; treatments?: string[]; other?: string };
+    heatingOrStylingChemicals: boolean | null;
+    salonTreatments: { used: boolean | null; treatments?: string[]; other?: string };
   };
   products: Record<ProductName, ProductUsage>;
   procedures: Record<ProcedureName, ProcedureUsage>;
   sideEffectsPastTreatment: { yesNo: boolean | null; description: string };
   sampleType: 'saliva' | 'blood' | 'either' | null;
   consentGeneticAnalysis: boolean | null;
-  ageOnset: number | null;
-  patterns: string[];
   onsetType: 'gradual' | 'sudden' | null;
-  triggers: string[];
-  healthConditions: string[];
-  hormonalData: {
-    regularCycle: boolean | null;
-    pcos: boolean | null;
-    pregnancyRelated: boolean | null;
-  };
 }
 
 export interface StoryContextType {
@@ -74,9 +65,9 @@ export interface StoryContextType {
   setGender: (g: 'male' | 'female') => void;
   setAgeOnset: (age: number) => void;
   setDuration: (value: DurationOption | null) => void;
-  setPatterns: (p: string[]) => void;
+  setPatterns: (p: PatternOption[]) => void;
   setOnsetType: (t: 'gradual' | 'sudden') => void;
-  setTriggers: (t: string[]) => void;
+  setTriggers: (t: Past6MonthsTrigger[]) => void;
   setFamilyHistory: (f: FamilyHistoryOption[]) => void;
   setHealthConditions: (h: DiagnosedCondition[]) => void;
   setMenstrualCycle: (value: MenstrualCycleOption | null) => void;
@@ -84,7 +75,6 @@ export interface StoryContextType {
   setAcneOilySkinAdulthood: (value: boolean | null) => void;
   setExcessBodyFacialHairGrowth: (value: boolean | null) => void;
   setPast6Months: (value: Past6MonthsTrigger[]) => void;
-  setHormonalData: (h: Partial<StoryData['hormonalData']>) => void;
   setTreatments: (t: Record<ProductName, ProductUsage>) => void;
   setHabits: (h: StoryData['habits']) => void;
   setProcedures: (p: Record<ProcedureName, ProcedureUsage>) => void;
@@ -198,11 +188,11 @@ const mapTrigger = (items: Past6MonthsTrigger[]): string[] => {
   return items.map(item => labels[item]).filter(Boolean);
 };
 
-const mapSmokingQuantity = (value?: SmokingQuantity): string | undefined => {
+const mapSmokingQuantity = (value?: SmokingQuantity | null): string | undefined => {
   switch (value) {
-    case 'under5': return 'Mild <5/day';
-    case '5to10': return 'Moderate 5-10/day';
-    case 'over10': return 'Severe >10/day';
+    case 'under5': return 'Under 5 a day';
+    case '5to10': return '5–10 a day';
+    case 'over10': return 'Over 10 a day';
     default: return undefined;
   }
 };
@@ -220,6 +210,96 @@ const mapSampleType = (value: 'saliva' | 'blood' | 'either' | null): string | un
   if (!value) return undefined;
   return value.charAt(0).toUpperCase() + value.slice(1);
 };
+
+export type IntakeAnswer = {
+  number: number;
+  question: string;
+  answer: string | string[] | Record<string, unknown>;
+};
+
+export type CompletedIntake = {
+  questions: IntakeAnswer[];
+};
+
+export function buildCompletedIntake(data: StoryData): CompletedIntake {
+  const productLabels: Record<ProductName, string> = {
+    medicatedShampoos: 'Medicated shampoos',
+    hairOilsOrSerums: 'Hair oils or serums',
+    topicalMinoxidil: 'Topical minoxidil',
+    oralMinoxidil: 'Oral minoxidil',
+    supplements: 'Supplements',
+  };
+
+  const procedureLabels: Record<ProcedureName, string> = {
+    prp: 'PRP',
+    gfcOrIprf: 'GFC or iPRF',
+    stemCellsOrExosomes: 'Stem cells or exosomes',
+    hairTransplant: 'Hair transplant',
+    other: 'Other',
+  };
+
+  const productAnswer = (Object.keys(data.products) as ProductName[]).reduce<Record<string, unknown>>((acc, key) => {
+    const entry = data.products[key];
+    acc[productLabels[key]] = {
+      used: entry.used,
+      duration: entry.duration ? {
+        under3months: 'Under 3 months',
+        '3to6months': '3–6 months',
+        over6months: 'Over 6 months',
+      }[entry.duration] : null,
+      helped: entry.helped,
+      sideEffects: entry.sideEffects,
+    };
+    return acc;
+  }, {});
+
+  const procedureAnswer = (Object.keys(data.procedures) as ProcedureName[]).reduce<Record<string, unknown>>((acc, key) => {
+    const entry = data.procedures[key];
+    acc[procedureLabels[key]] = {
+      done: entry.done,
+      sessions: entry.sessions ? {
+        '1to3': '1–3',
+        '4to6': '4–6',
+        over6: 'Over 6',
+      }[entry.sessions] : null,
+      helped: entry.helped,
+      other: entry.other ?? null,
+    };
+    return acc;
+  }, {});
+
+  const questions: IntakeAnswer[] = [
+    { number: 1, question: 'Age when hair loss began', answer: data.ageHairLossBegan !== null ? String(data.ageHairLossBegan) : 'Not answered' },
+    { number: 2, question: 'Duration', answer: mapDuration(data.duration) ?? 'Not answered' },
+    { number: 3, question: 'Family history', answer: data.familyHistory.length ? data.familyHistory.map(item => mapFamilyHistory([item])[0]) : 'Not answered' },
+    { number: 4, question: 'Pattern', answer: data.pattern.length ? data.pattern.map(item => mapPattern([item])[0]) : 'Not answered' },
+    { number: 5, question: 'Diagnosed conditions', answer: data.diagnosedConditions.length ? data.diagnosedConditions.map(item => mapDiagnosedConditions([item])[0]) : 'Not answered' },
+    { number: 6, question: 'Menstrual cycle', answer: data.gender === 'female' ? mapMenstrualCycle(data.menstrualCycle) ?? 'Not answered' : 'Not applicable' },
+    { number: 7, question: 'Pregnancy-related hair loss', answer: data.gender === 'female' ? mapPregnancy(data.pregnancyHairLoss) ?? 'Not answered' : 'Not applicable' },
+    { number: 8, question: 'Acne or oily skin in adulthood', answer: data.acneOilySkinAdulthood === null ? 'Not answered' : data.acneOilySkinAdulthood ? 'Yes' : 'No' },
+    { number: 9, question: 'Excess body or facial hair growth', answer: data.excessBodyFacialHairGrowth === null ? 'Not answered' : data.excessBodyFacialHairGrowth ? 'Yes' : 'No' },
+    { number: 10, question: 'In the past 6 months', answer: data.past6Months.length ? data.past6Months.map(item => mapTrigger([item])[0]) : 'Not answered' },
+    { number: 11, question: 'Habits', answer: {
+      smoking: data.habits.smoking.used === null ? 'Not answered' : data.habits.smoking.used ? { used: 'Yes', quantity: mapSmokingQuantity(data.habits.smoking.quantity) ?? 'Not answered' } : 'No',
+      alcohol: data.habits.alcohol === null ? 'Not answered' : data.habits.alcohol ? 'Yes' : 'No',
+      hardWater: data.habits.hardWater === null ? 'Not answered' : data.habits.hardWater ? 'Yes' : 'No',
+      hairWashFrequency: data.habits.hairWashFrequency ? mapHairWashFrequency(data.habits.hairWashFrequency) : 'Not answered',
+      heatingOrStylingChemicals: data.habits.heatingOrStylingChemicals === null ? 'Not answered' : data.habits.heatingOrStylingChemicals ? 'Yes' : 'No',
+      salonTreatments: data.habits.salonTreatments.used === null ? 'Not answered' : data.habits.salonTreatments.used ? {
+        used: 'Yes',
+        treatments: data.habits.salonTreatments.treatments ?? [],
+        other: data.habits.salonTreatments.other ?? null,
+      } : 'No',
+    } },
+    { number: 12, question: 'Products', answer: productAnswer },
+    { number: 13, question: 'Procedures', answer: procedureAnswer },
+    { number: 14, question: 'Side effects or poor response to past treatment', answer: data.sideEffectsPastTreatment.yesNo === null ? 'Not answered' : data.sideEffectsPastTreatment.yesNo ? { yes: true, description: data.sideEffectsPastTreatment.description || null } : 'No' },
+    { number: 15, question: 'Preferred sample type', answer: data.sampleType ? data.sampleType.charAt(0).toUpperCase() + data.sampleType.slice(1) : 'Not answered' },
+    { number: 16, question: 'Consent to sample collection and genetic analysis', answer: data.consentGeneticAnalysis === null ? 'Not answered' : data.consentGeneticAnalysis ? 'Yes' : 'No' },
+  ];
+
+  return { questions };
+}
 
 export function buildRequiredIntakeResponse(data: StoryData): RequiredIntakeResponse {
   const questionsA: RequiredIntakeQuestion[] = [
@@ -250,7 +330,7 @@ export function buildRequiredIntakeResponse(data: StoryData): RequiredIntakeResp
           followup: {
             key: 'smoking_severity',
             type: 'single',
-            options: ['Mild <5/day', 'Moderate 5-10/day', 'Severe >10/day'],
+            options: ['Under 5 a day', '5–10 a day', 'Over 10 a day'],
           },
         },
         { key: 'alcohol', type: 'yesno' },
@@ -312,19 +392,19 @@ export function buildRequiredIntakeResponse(data: StoryData): RequiredIntakeResp
 }
 
 const createDefaultProducts = (): Record<ProductName, ProductUsage> => ({
-  medicatedShampoos: { used: false },
-  hairOilsOrSerums: { used: false },
-  topicalMinoxidil: { used: false },
-  oralMinoxidil: { used: false },
-  supplements: { used: false },
+  medicatedShampoos: { used: null },
+  hairOilsOrSerums: { used: null },
+  topicalMinoxidil: { used: null },
+  oralMinoxidil: { used: null },
+  supplements: { used: null },
 });
 
 const createDefaultProcedures = (): Record<ProcedureName, ProcedureUsage> => ({
-  prp: { done: false },
-  gfcOrIprf: { done: false },
-  stemCellsOrExosomes: { done: false },
-  hairTransplant: { done: false },
-  other: { done: false },
+  prp: { done: null },
+  gfcOrIprf: { done: null },
+  stemCellsOrExosomes: { done: null },
+  hairTransplant: { done: null },
+  other: { done: null },
 });
 
 export const defaultData: StoryData = {
@@ -340,41 +420,22 @@ export const defaultData: StoryData = {
   excessBodyFacialHairGrowth: null,
   past6Months: [],
   habits: {
-    smoking: { used: false },
-    alcohol: false,
-    hardWater: false,
+    smoking: { used: null },
+    alcohol: null,
+    hardWater: null,
     hairWashFrequency: null,
-    heatingOrStylingChemicals: false,
-    salonTreatments: { used: false, treatments: [] },
+    heatingOrStylingChemicals: null,
+    salonTreatments: { used: null, treatments: [] },
   },
   products: createDefaultProducts(),
   procedures: createDefaultProcedures(),
   sideEffectsPastTreatment: { yesNo: null, description: '' },
   sampleType: null,
   consentGeneticAnalysis: null,
-  ageOnset: null,
-  patterns: [],
   onsetType: null,
-  triggers: [],
-  healthConditions: [],
-  hormonalData: { regularCycle: null, pcos: null, pregnancyRelated: null },
 };
 
 const StoryContext = createContext<StoryContextType | null>(null);
-const STORAGE_KEY = 'genoroot-hair-intake-v1';
-
-function loadPersistedData(): StoryData | null {
-  if (typeof window === 'undefined') return null;
-
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as Partial<StoryData>;
-    return { ...defaultData, ...parsed };
-  } catch {
-    return null;
-  }
-}
 
 export function validateIntake(data: StoryData): { valid: boolean; missing: string[] } {
   const missing: string[] = [];
@@ -460,19 +521,10 @@ export function validateIntake(data: StoryData): { valid: boolean; missing: stri
 }
 
 export function StoryProvider({ children }: { children: ReactNode }) {
-  const [data, setData] = useState<StoryData>(() => loadPersistedData() ?? defaultData);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    }
-  }, [data]);
+  const [data, setData] = useState<StoryData>(defaultData);
 
   const clearSavedIntake = () => {
     setData(defaultData);
-    if (typeof window !== 'undefined') {
-      window.localStorage.removeItem(STORAGE_KEY);
-    }
   };
 
   const setGender = (g: 'male' | 'female') =>
@@ -484,32 +536,23 @@ export function StoryProvider({ children }: { children: ReactNode }) {
         ...d,
         gender: g,
         diagnosedConditions: cleanedDiagnosedConditions,
-        healthConditions: cleanedDiagnosedConditions as unknown as string[],
         menstrualCycle: g === 'male' ? null : d.menstrualCycle,
         pregnancyHairLoss: g === 'male' ? null : d.pregnancyHairLoss,
-        hormonalData: g === 'male' ? { regularCycle: null, pcos: null, pregnancyRelated: null } : d.hormonalData,
       };
     });
 
-  const setAgeOnset = (age: number) => setData(d => ({ ...d, ageHairLossBegan: age, ageOnset: age }));
+  const setAgeOnset = (age: number) => setData(d => ({ ...d, ageHairLossBegan: age }));
   const setDuration = (value: DurationOption | null) => setData(d => ({ ...d, duration: value }));
-  const setPatterns = (p: string[]) => setData(d => ({ ...d, patterns: p, pattern: p as PatternOption[] }));
+  const setPatterns = (p: PatternOption[]) => setData(d => ({ ...d, pattern: p }));
   const setOnsetType = (t: 'gradual' | 'sudden') => setData(d => ({ ...d, onsetType: t }));
-  const setTriggers = (t: string[]) => setData(d => ({ ...d, triggers: t, past6Months: t as Past6MonthsTrigger[] }));
+  const setTriggers = (t: Past6MonthsTrigger[]) => setData(d => ({ ...d, past6Months: t }));
   const setFamilyHistory = (f: FamilyHistoryOption[]) => setData(d => ({ ...d, familyHistory: f }));
-  const setHealthConditions = (h: DiagnosedCondition[]) => setData(d => ({ ...d, diagnosedConditions: h, healthConditions: h as unknown as string[] }));
+  const setHealthConditions = (h: DiagnosedCondition[]) => setData(d => ({ ...d, diagnosedConditions: h }));
   const setMenstrualCycle = (value: MenstrualCycleOption | null) => setData(d => ({ ...d, menstrualCycle: value }));
   const setPregnancyHairLoss = (value: PregnancyStatusOption | null) => setData(d => ({ ...d, pregnancyHairLoss: value }));
   const setAcneOilySkinAdulthood = (value: boolean | null) => setData(d => ({ ...d, acneOilySkinAdulthood: value }));
   const setExcessBodyFacialHairGrowth = (value: boolean | null) => setData(d => ({ ...d, excessBodyFacialHairGrowth: value }));
   const setPast6Months = (value: Past6MonthsTrigger[]) => setData(d => ({ ...d, past6Months: value }));
-  const setHormonalData = (h: Partial<StoryData['hormonalData']>) =>
-    setData(d => ({
-      ...d,
-      hormonalData: { ...d.hormonalData, ...h },
-      menstrualCycle: h.regularCycle === true ? 'regular' : d.menstrualCycle,
-      pregnancyHairLoss: h.pregnancyRelated === true ? 'currentlyPregnant' : d.pregnancyHairLoss,
-    }));
   const setTreatments = (t: Record<ProductName, ProductUsage>) => setData(d => ({ ...d, products: t }));
   const setHabits = (h: StoryData['habits']) => setData(d => ({ ...d, habits: h }));
   const setProcedures = (p: Record<ProcedureName, ProcedureUsage>) => setData(d => ({ ...d, procedures: p }));
@@ -534,7 +577,6 @@ export function StoryProvider({ children }: { children: ReactNode }) {
         setAcneOilySkinAdulthood,
         setExcessBodyFacialHairGrowth,
         setPast6Months,
-        setHormonalData,
         setTreatments,
         setHabits,
         setProcedures,
